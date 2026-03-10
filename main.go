@@ -1,7 +1,13 @@
 package main
 
-import "ticket-reservation/cmd"
+import (
+	"github.com/guncv/ticket-reservation-server/internal/containers"
+	_ "github.com/guncv/ticket-reservation-server/internal/handlers"
+)
 
 func main() {
-	cmd.Execute()
+	c := containers.NewContainer()
+	if err := c.Run().Error; err != nil {
+		panic(err)
+	}
 }
