@@ -1,41 +1,39 @@
-dc = docker compose -f compose.dev.yml
-dc-prod = docker compose -f compose.prod.yml
+.PHONY: run mock-gen clean-mock test migrate-up migrate-down migrate-new seed-new
 
-.PHONY: run-dev down-dev build-dev clean-dev logs-dev restart-dev ps-dev migrate-up-dev migrate-down-dev rebuild-dev mock clean-mock test swagger-gen
+migrate-up:
+	cd cmd && go run . migrate up
 
-info:
-	$(dc) ps
+migrate-down:
+	cd cmd && go run . migrate down --all
 
-run-dev:
-	$(dc) up
+migrate-new:
+	@if [ -z "$(name)" ]; then \
+		echo "Error: name is required"; \
+		echo "Usage: make migrate-new name=<migration-name>"; \
+		echo "Example: make migrate-new name=create_users_table"; \
+		exit 1; \
+	fi
+	cd cmd && go run . migrate new $(name)
 
-run-prod:
-	$(dc-prod) up
+seed-new:
+	@if [ -z "$(name)" ]; then \
+		echo "Error: name is required"; \
+		echo "Usage: make seed-new name=<seeder-name>"; \
+		echo "Example: make seed-new name=admin_account"; \
+		exit 1; \
+	fi
+	cd cmd && go run . seeder new $(name)
 
-build-prod:
-	$(dc-prod) build
+seed:
+	cd cmd && go run . seeder seed
+run:
+	cd cmd && go run .
 
-build-dev:
-	$(dc) build
+run-db:
+	docker compose up -d
 
-clean-dev:
-	$(dc) down --rmi all --volumes --remove-orphans
-
-clean-prod:
-	$(dc-prod) down --rmi all --volumes --remove-orphans
-
-migrate-up-dev:
-	$(dc) exec interview-backend-server migrate -path ./internal/db/migration -database postgres://user:password@localhost:5432/interview?sslmode=disable up
-
-migrate-down-dev:
-	$(dc) exec interview-backend-server migrate -path ./internal/db/migration -database postgres://user:password@localhost:5432/interview?sslmode=disable down
-
-sqlc:
-	sqlc generate
-
-rebuild-dev: clean-dev build-dev run-dev
-
-rebuild-prod: clean-prod build-prod run-prod
+clear-db:
+	docker compose down -v --remove-orphans
 
 mock-gen:
 	mockery --all
@@ -45,7 +43,3 @@ clean-mock:
 
 test:
 	go test -v -cover ./...
-
-swagger-gen:
-	swag init -g cmd/server/main.go -o ./docs --outputTypes json --parseVendor --parseDependency
-

@@ -1,45 +1,44 @@
 package containers
 
 import (
-	"database/sql"
-
+	"github.com/guncv/ticket-reservation-server/internal/api"
 	"github.com/guncv/ticket-reservation-server/internal/config"
-	"github.com/guncv/ticket-reservation-server/internal/infras/database"
-	"github.com/guncv/ticket-reservation-server/internal/infras/log"
-	"github.com/guncv/ticket-reservation-server/internal/infras/server"
-	"gorm.io/gorm"
+	"github.com/guncv/ticket-reservation-server/internal/db"
+	"github.com/guncv/ticket-reservation-server/internal/infra/http"
+	"github.com/guncv/ticket-reservation-server/internal/infra/log"
+	"github.com/guncv/ticket-reservation-server/internal/infra/redis"
+	"github.com/guncv/ticket-reservation-server/internal/infra/test"
+	"github.com/guncv/ticket-reservation-server/internal/shared"
 )
 
 func (c *Container) InfrastructureProvider() {
-
-	c.Container.Provide(func(cfg *config.Config) *log.Logger {
-		return log.Initialize(cfg.AppConfig.AppEnv)
-	})
-
-	if err := c.Container.Provide(func(cfg *config.Config) *server.GinServer {
-		return server.NewGinServer(cfg, c.Container)
+	if err := c.Container.Provide(func(cfg *config.Config) (*db.PgPool, error) {
+		if cfg.AppConfig.AppEnv == shared.AppEnvTest {
+			return test.NewTestPgPool(cfg)
+		}
+		return db.NewPgPool(cfg)
 	}); err != nil {
 		c.Error = err
 	}
 
-	if err := c.Container.Provide(database.ConnectPostgres); err != nil {
+	if err := c.Container.Provide(log.NewLogger); err != nil {
 		c.Error = err
 	}
 
-	if err := c.Container.Provide(func(conn *database.DBConnections) *gorm.DB {
-		return conn.GormDB
+	if err := c.Container.Provide(func(cfg *config.Config, logger log.Logger) (redis.RedisClient, error) {
+		if cfg.AppConfig.AppEnv == shared.AppEnvTest {
+			return test.NewTestRedisClient(cfg)
+		}
+		return redis.NewRedisClient(cfg, logger), nil
 	}); err != nil {
 		c.Error = err
 	}
 
-	if err := c.Container.Provide(func(conn *database.DBConnections) *sql.DB {
-		return conn.SqlDB
-	}); err != nil {
+	if err := c.Container.Provide(http.NewCookies); err != nil {
 		c.Error = err
 	}
 
-	if err := c.Container.Provide(database.NewRedisClient); err != nil {
+	if err := c.Container.Provide(api.NewAuthMiddleware); err != nil {
 		c.Error = err
 	}
-
 }
