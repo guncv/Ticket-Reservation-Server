@@ -62,6 +62,32 @@ func (p *PasetoToken) GenerateRefreshToken(userID string) (string, time.Time, er
 	return token, expiresAt, nil
 }
 
+func (p *PasetoToken) VerifyAccessToken(tokenString string) (*TokenPayload, error) {
+	payload, err := p.decryptToken(tokenString)
+	if err != nil {
+		return nil, err
+	}
+
+	if payload.Type != AccessToken {
+		return nil, ErrTokenInvalid
+	}
+
+	return payload, nil
+}
+
+func (p *PasetoToken) VerifyToken(tokenString string, userID string) (*TokenPayload, error) {
+	payload, err := p.decryptToken(tokenString)
+	if err != nil {
+		return nil, err
+	}
+
+	if payload.UserID != userID {
+		return nil, ErrTokenInvalid
+	}
+
+	return payload, nil
+}
+
 func (p *PasetoToken) generateToken(
 	userID string, tokenType TokenType, duration time.Duration,
 ) (string, time.Time, error) {
@@ -85,7 +111,7 @@ func (p *PasetoToken) generateToken(
 	return token, expiresAt, nil
 }
 
-func (p *PasetoToken) VerifyToken(tokenString string, userID string) (*TokenPayload, error) {
+func (p *PasetoToken) decryptToken(tokenString string) (*TokenPayload, error) {
 	var claims PasetoClaims
 	err := p.paseto.Decrypt(tokenString, p.symmetricKey, &claims, nil)
 	if err != nil {
@@ -97,16 +123,10 @@ func (p *PasetoToken) VerifyToken(tokenString string, userID string) (*TokenPayl
 		return nil, ErrTokenExpired
 	}
 
-	if claims.UserID != userID {
-		return nil, ErrTokenInvalid
-	}
-
-	payload := &TokenPayload{
+	return &TokenPayload{
 		UserID:    claims.UserID,
 		IssuedAt:  claims.IssuedAt,
 		ExpiresAt: claims.ExpiresAt,
 		Type:      claims.Type,
-	}
-
-	return payload, nil
+	}, nil
 }

@@ -2,9 +2,3 @@ with-expecter: true
 issue-845-fix: true
 
 packages:
-  # gitlab.com/ai-planning-trip/backend-server/internal/infra/auth:
-  #     config:
-  #       dir: ./internal/mocks
-  #       filename: "{{.InterfaceName}}.go"
-  #       outpkg: mocks
-  #       recursive: true

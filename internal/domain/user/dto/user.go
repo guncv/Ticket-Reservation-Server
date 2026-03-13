@@ -1,8 +1,10 @@
 package dto
 
+type UserRole = string
+
 const (
-	UserRoleAdmin = "admin"
-	UserRoleUser  = "user"
+	UserRoleAdmin UserRole = "admin"
+	UserRoleUser  UserRole = "user"
 )
 
 type HealthCheckResp struct {

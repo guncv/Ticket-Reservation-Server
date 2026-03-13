@@ -3,7 +3,6 @@ package repo
 import (
 	"context"
 
-	"cloud.google.com/go/civil"
 	"github.com/guncv/ticket-reservation-server/internal/domain/user/dto"
 	"github.com/guncv/ticket-reservation-server/internal/infra/log"
 
@@ -16,7 +15,6 @@ type UserRepository interface {
 	CheckUserNameExists(ctx context.Context, userName string) (bool, error)
 	CreateSession(ctx context.Context, params CreateSessionParams) error
 	GetSessionByRefreshToken(ctx context.Context, hashedRefreshToken string) (dto.Session, error)
-	RevokeSession(ctx context.Context, sessionID string, revokedAt civil.Time) error
 }
 
 type userRepository struct {

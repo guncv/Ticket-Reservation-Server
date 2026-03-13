@@ -79,6 +79,7 @@ func (r *userRepository) GetSessionByRefreshToken(ctx context.Context, hashedRef
 	).Scan(
 		&session.ID,
 		&session.UserID,
+		&session.HashedRefreshToken,
 		&session.IsRevoked,
 		&session.UserAgent,
 		&session.IPAddress,
@@ -92,29 +93,4 @@ func (r *userRepository) GetSessionByRefreshToken(ctx context.Context, hashedRef
 	}
 
 	return session, nil
-}
-
-func (r *userRepository) RevokeSession(ctx context.Context, sessionID string, revokedAt civil.Time) error {
-	ctx, conn, err := r.db.EnsureConnFromCtx(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
-	}
-	defer conn.Release()
-
-	query := `
-		UPDATE sessions SET is_revoked = TRUE, revoked_at = $2 WHERE id = $1
-	`
-
-	_, err = conn.Exec(
-		ctx,
-		query,
-		sessionID,
-		revokedAt,
-	)
-	if err != nil {
-		r.log.Error(ctx, "Failed to revoke session", err)
-		return fmt.Errorf("failed to revoke session: %w", err)
-	}
-
-	return nil
 }

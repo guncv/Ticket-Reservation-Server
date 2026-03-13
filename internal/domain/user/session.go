@@ -2,10 +2,12 @@ package user
 
 import (
 	"context"
+	"errors"
 
 	"cloud.google.com/go/civil"
 	"github.com/guncv/ticket-reservation-server/internal/domain/user/dto"
 	"github.com/guncv/ticket-reservation-server/internal/domain/user/repo"
+	"github.com/guncv/ticket-reservation-server/internal/domain/user/token"
 	"github.com/guncv/ticket-reservation-server/internal/shared"
 )
 
@@ -18,13 +20,13 @@ func (s *userService) CreateSession(ctx context.Context, userID string) (dto.Cre
 
 	accessToken, err := s.token.GenerateAccessToken(userID)
 	if err != nil {
-		s.logger.Error(ctx, "Failed to generate access token", err)
+		s.log.Error(ctx, "Failed to generate access token", err)
 		return dto.CreateSessionResp{}, err
 	}
 
 	refreshToken, expiresAt, err := s.token.GenerateRefreshToken(userID)
 	if err != nil {
-		s.logger.Error(ctx, "Failed to generate refresh token", err)
+		s.log.Error(ctx, "Failed to generate refresh token", err)
 		return dto.CreateSessionResp{}, err
 	}
 
@@ -42,7 +44,7 @@ func (s *userService) CreateSession(ctx context.Context, userID string) (dto.Cre
 	}
 
 	if err := s.userRepo.CreateSession(ctx, session); err != nil {
-		s.logger.Error(ctx, "Failed to create session", err)
+		s.log.Error(ctx, "Failed to create session", err)
 		return dto.CreateSessionResp{}, err
 	}
 
@@ -56,67 +58,54 @@ func (s *userService) CreateSession(ctx context.Context, userID string) (dto.Cre
 	}, nil
 }
 
-// func (s *userService) VerifyAndRenewToken(ctx context.Context, req *dto.SessionReq) (*dto.SessionResult, error) {
-// 	hashedRefreshToken := shared.HashRefreshToken(req.RefreshToken)
-// 	session, err := s.userRepo.GetSession(ctx, hashedRefreshToken)
-// 	if err != nil {
-// 		s.logger.Error(ctx, "Failed to get session", err)
-// 		return nil, err
-// 	}
+func (s *userService) VerifyAndRenewToken(ctx context.Context, req dto.RenewTokenReq) (dto.RenewTokenResp, error) {
+	_, err := s.token.VerifyAccessToken(req.AccessToken)
+	if err == nil {
+		return dto.RenewTokenResp{
+			AccessToken:  req.AccessToken,
+			RefreshToken: req.RefreshToken,
+		}, nil
+	}
 
-// 	if session.IsRevoked {
-// 		s.logger.Error(ctx, "Session is revoked")
-// 		return nil, errors.New("session is revoked")
-// 	}
+	if !errors.Is(err, token.ErrTokenExpired) {
+		s.log.Error(ctx, "Invalid access token", err)
+		return dto.RenewTokenResp{}, errors.New("invalid access token")
+	}
 
-// 	_, err = s.token.VerifyToken(req.AccessToken, session.UserID)
-// 	if err == nil {
-// 		return &dto.SessionResult{
-// 			UserID:       session.UserID,
-// 			AccessToken:  req.AccessToken,
-// 			RefreshToken: req.RefreshToken,
-// 		}, nil
-// 	}
+	ctx, tx, err := s.db.EnsureTxFromCtx(ctx)
+	if err != nil {
+		return dto.RenewTokenResp{}, err
+	}
+	defer tx.Rollback(ctx)
 
-// 	if !errors.Is(err, token.ErrTokenExpired) {
-// 		s.logger.Error(ctx, "Failed to verify access token", err)
-// 		return nil, errors.New("invalid access token")
-// 	}
+	hashedRefreshToken := shared.HashRefreshToken(req.RefreshToken)
+	session, err := s.userRepo.GetSessionByRefreshToken(ctx, hashedRefreshToken)
+	if err != nil {
+		s.log.Error(ctx, "Failed to get session", err)
+		return dto.RenewTokenResp{}, err
+	}
 
-// 	refreshTokenPayload, err := s.token.VerifyToken(req.RefreshToken, session.UserID)
-// 	if err != nil {
-// 		s.logger.Error(ctx, "Failed to verify refresh token", err)
-// 		return nil, errors.New("invalid refresh token")
-// 	}
+	if session.IsRevoked {
+		s.log.Error(ctx, "Session is revoked")
+		return dto.RenewTokenResp{}, errors.New("session is revoked")
+	}
 
-// 	newAccessToken, err := s.token.GenerateAccessToken(refreshTokenPayload.UserID)
-// 	if err != nil {
-// 		s.logger.Error(ctx, "Failed to generate new access token", err)
-// 		return nil, err
-// 	}
+	if _, err = s.token.VerifyToken(req.RefreshToken, session.UserID); err != nil {
+		s.log.Error(ctx, "Failed to verify refresh token", err)
+		if errors.Is(err, token.ErrTokenExpired) {
+			return dto.RenewTokenResp{}, errors.New("refresh token expired")
+		}
+		return dto.RenewTokenResp{}, errors.New("invalid refresh token")
+	}
 
-// 	return &dto.SessionResult{
-// 		UserID:       refreshTokenPayload.UserID,
-// 		AccessToken:  newAccessToken,
-// 		RefreshToken: req.RefreshToken,
-// 	}, nil
-// }
+	newAccessToken, err := s.token.GenerateAccessToken(session.UserID)
+	if err != nil {
+		s.log.Error(ctx, "Failed to generate new access token", err)
+		return dto.RenewTokenResp{}, err
+	}
 
-// func (s *userService) RevokeSession(ctx context.Context, refreshToken string) error {
-// 	ctx, tx, err := s.db.EnsureTxFromCtx(ctx)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer tx.Rollback(ctx)
-
-// 	hashedRefreshToken := shared.HashRefreshToken(refreshToken)
-// 	if err := s.userRepo.RevokeSession(ctx, hashedRefreshToken); err != nil {
-// 		return err
-// 	}
-
-// 	if err := tx.Commit(ctx); err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-// }
+	return dto.RenewTokenResp{
+		AccessToken:  newAccessToken,
+		RefreshToken: req.RefreshToken,
+	}, nil
+}

@@ -15,6 +15,7 @@ import (
 type UserService interface {
 	HealthCheck(ctx context.Context) (*dto.HealthCheckResp, error)
 	CreateUser(ctx context.Context, req dto.CreateUserReq) (dto.CreateUserResp, error)
+	VerifyAndRenewToken(ctx context.Context, req dto.RenewTokenReq) (dto.RenewTokenResp, error)
 }
 
 type userService struct {
@@ -22,7 +23,7 @@ type userService struct {
 	db       *db.PgPool
 	config   *config.Config
 	token    token.Token
-	logger   log.Logger
+	log      log.Logger
 	redis    redis.RedisClient
 }
 
@@ -39,7 +40,7 @@ func NewUserService(
 		db:       db,
 		config:   config,
 		token:    token,
-		logger:   logger,
+		log:      logger,
 		redis:    redis,
 	}
 }
@@ -53,6 +54,7 @@ func (s *userService) HealthCheck(ctx context.Context) (*dto.HealthCheckResp, er
 
 	result, err := s.userRepo.HealthCheck(ctx)
 	if err != nil {
+		s.log.Error(ctx, "Failed to health check", err)
 		return nil, err
 	}
 
