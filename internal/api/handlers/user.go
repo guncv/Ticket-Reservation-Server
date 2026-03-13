@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/guncv/ticket-reservation-server/internal/config"
 	"github.com/guncv/ticket-reservation-server/internal/domain/user"
+	"github.com/guncv/ticket-reservation-server/internal/domain/user/dto"
 	cookies "github.com/guncv/ticket-reservation-server/internal/infra/http"
 )
 
@@ -35,4 +36,22 @@ func (h *UserHandler) HealthCheck(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, result)
+}
+
+func (h *UserHandler) CreateUser(c *gin.Context) {
+	var req dto.CreateUserReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	userResp, err := h.userSrv.CreateUser(c.Request.Context(), req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	h.cookies.SetRefreshTokenCookie(c, userResp.RefreshToken)
+
+	c.JSON(http.StatusOK, userResp)
 }

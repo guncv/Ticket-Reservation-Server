@@ -43,4 +43,5 @@ func userRoutes(api_v1 *gin.RouterGroup, userHandler *handlers.UserHandler, auth
 	userRoutes := api_v1.Group("/user")
 
 	userRoutes.GET("/health", userHandler.HealthCheck)
+	userRoutes.POST("/register", userHandler.CreateUser)
 }

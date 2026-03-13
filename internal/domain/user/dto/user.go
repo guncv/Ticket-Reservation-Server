@@ -1,19 +1,21 @@
 package dto
 
+const (
+	UserRoleAdmin = "admin"
+	UserRoleUser  = "user"
+)
+
 type HealthCheckResp struct {
 	Status string `json:"status"`
 }
 
-type GetOAuthURLResult struct {
-	AuthURL string `json:"auth_url"`
+type CreateUserReq struct {
+	UserName string `json:"user_name"`
+	Password string `json:"password"`
 }
 
-type SignInOAuthReq struct {
-	Code  string `json:"code"`
-	State string `json:"state"`
-}
-
-type SignInResult struct {
+type CreateUserResp struct {
+	UserID       string `json:"user_id"`
 	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+	RefreshToken string `json:"-"` // Only set in HttpOnly cookie, never in JSON body
 }

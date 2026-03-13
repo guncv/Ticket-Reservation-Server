@@ -80,6 +80,7 @@ require (
 )
 
 require (
+	cloud.google.com/go v0.123.0
 	github.com/amacneil/dbmate/v2 v2.28.0
 	github.com/bytedance/sonic v1.14.0 // indirect
 	github.com/bytedance/sonic/loader v0.3.0 // indirect

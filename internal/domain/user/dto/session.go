@@ -1,12 +1,19 @@
 package dto
 
-type SessionReq struct {
-	AccessToken string
-	// RefreshToken string
-}
+import "cloud.google.com/go/civil"
 
-type SessionResult struct {
-	UserID       string
+type CreateSessionResp struct {
 	AccessToken  string
 	RefreshToken string
+}
+
+type Session struct {
+	ID        string
+	UserID    string
+	IsRevoked bool
+	UserAgent string
+	IPAddress string
+	RevokedAt civil.Time
+	ExpiresAt civil.Time
+	CreatedAt civil.Time
 }
