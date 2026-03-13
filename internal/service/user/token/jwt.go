@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/guncv/ticket-reservation-server/internal/config"
 	"github.com/guncv/ticket-reservation-server/internal/infra/log"
 )
@@ -40,12 +41,9 @@ func (j *JWTToken) GenerateAccessToken(userID string) (string, error) {
 	return token, nil
 }
 
-func (j *JWTToken) GenerateRefreshToken(userID string) (string, time.Time, error) {
-	token, expiresAt, err := j.generateToken(userID, RefreshToken, j.cfg.AuthConfig.RefreshTokenDuration)
-	if err != nil {
-		return "", time.Time{}, err
-	}
-
+func (j *JWTToken) GenerateRefreshToken() (string, time.Time, error) {
+	token := uuid.NewString()
+	expiresAt := time.Now().Add(j.cfg.AuthConfig.RefreshTokenDuration)
 	return token, expiresAt, nil
 }
 
@@ -62,18 +60,6 @@ func (j *JWTToken) VerifyAccessToken(tokenString string) (*TokenPayload, error) 
 	return payload, nil
 }
 
-func (j *JWTToken) VerifyToken(tokenString string, userID string) (*TokenPayload, error) {
-	payload, err := j.parseToken(tokenString)
-	if err != nil {
-		return nil, err
-	}
-
-	if payload.UserID != userID {
-		return nil, ErrTokenInvalid
-	}
-
-	return payload, nil
-}
 
 func (j *JWTToken) generateToken(
 	userID string, tokenType TokenType, duration time.Duration,

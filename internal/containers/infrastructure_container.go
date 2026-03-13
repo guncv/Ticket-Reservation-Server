@@ -8,6 +8,7 @@ import (
 	"github.com/guncv/ticket-reservation-server/internal/infra/log"
 	"github.com/guncv/ticket-reservation-server/internal/infra/redis"
 	"github.com/guncv/ticket-reservation-server/internal/infra/test"
+	"github.com/guncv/ticket-reservation-server/internal/service/user/token"
 	"github.com/guncv/ticket-reservation-server/internal/shared"
 )
 
@@ -22,6 +23,10 @@ func (c *Container) InfrastructureProvider() {
 	}
 
 	if err := c.Container.Provide(log.NewLogger); err != nil {
+		c.Error = err
+	}
+
+	if err := c.Container.Provide(token.NewToken); err != nil {
 		c.Error = err
 	}
 

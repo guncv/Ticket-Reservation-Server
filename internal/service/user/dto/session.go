@@ -1,6 +1,6 @@
 package dto
 
-import "cloud.google.com/go/civil"
+import "time"
 
 type CreateSessionResp struct {
 	AccessToken  string
@@ -24,7 +24,7 @@ type Session struct {
 	IsRevoked          bool
 	UserAgent          string
 	IPAddress          string
-	RevokedAt          civil.Time
-	ExpiresAt          civil.Time
-	CreatedAt          civil.Time
+	RevokedAt          *time.Time
+	ExpiresAt          time.Time
+	CreatedAt          time.Time
 }

@@ -74,16 +74,10 @@ func TestContainer_DevEnv(t *testing.T) {
 
 func setupTestDevEnv() func() {
 	os.Setenv("APP_ENV", shared.AppEnvDev)
-	os.Setenv("PASSWORD_PEPPER", shared.TestPasswordPepper)
-	os.Setenv("GOOGLE_AUTH_CLIENT_ID", shared.TestGoogleAuthClientID)
-	os.Setenv("GOOGLE_AUTH_CLIENT_SECRET", shared.TestGoogleAuthClientSecret)
-	os.Setenv("GOOGLE_AUTH_REDIRECT_URI", shared.TestGoogleAuthRedirectURI)
+	os.Setenv("TOKEN_SECRET_KEY", shared.TestTokenSecretKey)
 
 	return func() {
 		os.Unsetenv("APP_ENV")
-		os.Unsetenv("PASSWORD_PEPPER")
-		os.Unsetenv("GOOGLE_AUTH_CLIENT_ID")
-		os.Unsetenv("GOOGLE_AUTH_CLIENT_SECRET")
-		os.Unsetenv("GOOGLE_AUTH_REDIRECT_URI")
+		os.Unsetenv("TOKEN_SECRET_KEY")
 	}
 }

@@ -13,12 +13,6 @@ const (
 )
 
 const (
-	AuthProviderEmail    = "EMAIL"
-	AuthProviderGoogle   = "GOOGLE"
-	AuthProviderFacebook = "FACEBOOK"
-)
-
-const (
 	AuthorizationHeaderKey  = "authorization"
 	AuthorizationTypeBearer = "bearer"
 	XAccessTokenHeaderKey   = "X-Access-Token"
@@ -29,10 +23,7 @@ const (
 )
 
 const (
-	TestPasswordPepper         = "test-pepper"
-	TestGoogleAuthClientID     = "test-google-client-id"
-	TestGoogleAuthClientSecret = "test-google-client-secret"
-	TestGoogleAuthRedirectURI  = "test-google-redirect-uri"
+	TestTokenSecretKey = "test-token-secret-key"
 
 	// TestDatabaseConfig contains constants for test database setup
 	TestPostgresImage = "postgres:18-alpine"

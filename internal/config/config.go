@@ -39,11 +39,6 @@ func LoadConfig(flags *pflag.FlagSet) (*Config, error) {
 	}
 
 	// Bind env to config
-	v.BindEnv("OAuthConfig.GOOGLE_AUTH_CLIENT_ID", "GOOGLE_AUTH_CLIENT_ID")
-	v.BindEnv("OAuthConfig.GOOGLE_AUTH_CLIENT_SECRET", "GOOGLE_AUTH_CLIENT_SECRET")
-	v.BindEnv("OAuthConfig.GOOGLE_AUTH_REDIRECT_URI", "GOOGLE_AUTH_REDIRECT_URI")
-
-	v.BindEnv("PasswordConfig.PASSWORD_PEPPER", "PASSWORD_PEPPER")
 	v.BindEnv("AuthConfig.ACCESS_TOKEN_DURATION", "ACCESS_TOKEN_DURATION")
 	v.BindEnv("AuthConfig.REFRESH_TOKEN_DURATION", "REFRESH_TOKEN_DURATION")
 	v.BindEnv("AuthConfig.COOKIE_DOMAIN", "COOKIE_DOMAIN")
@@ -115,17 +110,8 @@ func setDefaults(v *viper.Viper) {
 		appEnv = defaultAppEnv
 	}
 	if appEnv == shared.AppEnvTest {
-		v.SetDefault("PasswordConfig.PASSWORD_PEPPER", shared.TestPasswordPepper)
-		v.SetDefault("OAuthConfig.GOOGLE_AUTH_CLIENT_ID", shared.TestGoogleAuthClientID)
-		v.SetDefault("OAuthConfig.GOOGLE_AUTH_CLIENT_SECRET", shared.TestGoogleAuthClientSecret)
-		v.SetDefault("OAuthConfig.GOOGLE_AUTH_REDIRECT_URI", shared.TestGoogleAuthRedirectURI)
+		v.SetDefault("TokenConfig.TOKEN_SECRET_KEY", shared.TestTokenSecretKey)
 	}
-
-	v.SetDefault("PasswordConfig.ARGON2_PARAMS.SALT_LENGTH", 16)
-	v.SetDefault("PasswordConfig.ARGON2_PARAMS.MEMORY", 65536)
-	v.SetDefault("PasswordConfig.ARGON2_PARAMS.ITERATIONS", 4)
-	v.SetDefault("PasswordConfig.ARGON2_PARAMS.PARALLELISM", 4)
-	v.SetDefault("PasswordConfig.ARGON2_PARAMS.KEY_LENGTH", 32)
 
 	v.SetDefault("TokenConfig.TOKEN_TYPE", defaultTokenType)
 	v.SetDefault("TokenConfig.TOKEN_ISSUER", defaultTokenIssuer)
@@ -166,40 +152,6 @@ func (c *Config) Validate() error {
 
 	if c.DatabaseConfig.DbName == "" {
 		return errors.New("POSTGRES_DB is required")
-	}
-
-	if c.AppConfig.AppEnv != shared.AppEnvTest {
-		if c.OAuthConfig.GoogleAuthClientID == "" {
-			return errors.New("GOOGLE_AUTH_CLIENT_ID is required")
-		}
-		if c.OAuthConfig.GoogleAuthClientSecret == "" {
-			return errors.New("GOOGLE_AUTH_CLIENT_SECRET is required")
-		}
-		if c.OAuthConfig.GoogleAuthRedirectURI == "" {
-			return errors.New("GOOGLE_AUTH_REDIRECT_URI is required")
-		}
-	}
-
-	if c.PasswordConfig.PasswordPepper == "" {
-		return errors.New("PASSWORD_PEPPER is required")
-	}
-
-	if c.AppConfig.AppEnv != shared.AppEnvTest {
-		if c.PasswordConfig.Argon2Params.SaltLength == 0 {
-			return errors.New("ARGON2_PARAMS.SALT_LENGTH is required")
-		}
-		if c.PasswordConfig.Argon2Params.Memory == 0 {
-			return errors.New("ARGON2_PARAMS.MEMORY is required")
-		}
-		if c.PasswordConfig.Argon2Params.Iterations == 0 {
-			return errors.New("ARGON2_PARAMS.ITERATIONS is required")
-		}
-		if c.PasswordConfig.Argon2Params.Parallelism == 0 {
-			return errors.New("ARGON2_PARAMS.PARALLELISM is required")
-		}
-		if c.PasswordConfig.Argon2Params.KeyLength == 0 {
-			return errors.New("ARGON2_PARAMS.KEY_LENGTH is required")
-		}
 	}
 
 	if c.TokenConfig.SecretKey == "" {

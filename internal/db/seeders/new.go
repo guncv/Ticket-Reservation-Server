@@ -30,33 +30,41 @@ func NewSeeder(name string, cfg *config.Config) error {
 	funcNameDown := funcName + "Down"
 
 	template := fmt.Sprintf(`package seeders
-
 import (
 	"context"
 
 	"github.com/guncv/ticket-reservation-server/internal/config"
-	"github.com/guncv/ticket-reservation-server/internal/db"
+	"github.com/guncv/ticket-reservation-server/internal/containers"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
-
+	
 func init() {
 	if err := registerSeed(%s, %s); err != nil {
 		panic(err)
 	}
 }
+	
+func %s(ctx context.Context, pool *pgxpool.Pool, cfg *config.Config) error {
+	c := containers.NewContainer(cfg)
+	
+	if err := c.Container.Invoke(func() {
+		// TODO: Implement seeder logic here
+	}); err != nil {
+		return err
+	}
 
-func %s(ctx context.Context, q db.Querier, cfg *config.Config) error {
-	// Use q.Exec, q.Query, or q.QueryRow for database operations
-	// Example:
-	// _, err := q.Exec(ctx, "INSERT INTO users (name) VALUES ($1)", "admin")
-	// return err
 	return nil
 }
+	
+func %s(ctx context.Context, pool *pgxpool.Pool, cfg *config.Config) error {
+	c := containers.NewContainer(cfg)
 
-func %s(ctx context.Context, q db.Querier, cfg *config.Config) error {
-	// Use q.Exec, q.Query, or q.QueryRow for rollback operations
-	// Example:
-	// _, err := q.Exec(ctx, "DELETE FROM users WHERE name = $1", "admin")
-	// return err
+	if err := c.Container.Invoke(func() {
+	// TODO: Implement rollback logic here
+	}); err != nil {
+		return err
+	}
+
 	return nil
 }
 `, funcNameUp, funcNameDown, funcNameUp, funcNameDown)

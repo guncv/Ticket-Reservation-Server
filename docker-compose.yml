@@ -1,9 +1,9 @@
 services:
   postgres:
     image: postgres:18-alpine
-    container_name: trip-planner-db
+    container_name: ticket-reservation-server-db
     environment:
-      POSTGRES_DB: trip-planner
+      POSTGRES_DB: ticket-reservation-server
       POSTGRES_USER: root
       POSTGRES_PASSWORD: password
       PGDATA: /var/lib/postgresql/18/data/pgdata
@@ -19,7 +19,7 @@ services:
     networks:
       - db_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U root -d trip-planner"]
+      test: ["CMD-SHELL", "pg_isready -U root -d ticket-reservation-server"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -27,7 +27,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: trip-planner-redis
+    container_name: ticket-reservation-server-redis
     ports:
       - "6379:6379"
     command: redis-server --requirepass password

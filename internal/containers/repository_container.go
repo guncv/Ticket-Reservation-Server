@@ -1,7 +1,7 @@
 package containers
 
 import (
-	userRepo "github.com/guncv/ticket-reservation-server/internal/domain/user/repo"
+	userRepo "github.com/guncv/ticket-reservation-server/internal/service/user/repo"
 )
 
 func (c *Container) RepositoryProvider() {

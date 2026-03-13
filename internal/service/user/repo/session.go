@@ -3,9 +3,9 @@ package repo
 import (
 	"context"
 	"fmt"
+	"time"
 
-	"cloud.google.com/go/civil"
-	"github.com/guncv/ticket-reservation-server/internal/domain/user/dto"
+	"github.com/guncv/ticket-reservation-server/internal/service/user/dto"
 )
 
 type CreateSessionParams struct {
@@ -13,7 +13,7 @@ type CreateSessionParams struct {
 	HashedRefreshToken string
 	UserAgent          string
 	IPAddress          string
-	ExpiresAt          civil.Time
+	ExpiresAt          time.Time
 }
 
 func (r *userRepository) CreateSession(ctx context.Context, params CreateSessionParams) error {
@@ -93,4 +93,26 @@ func (r *userRepository) GetSessionByRefreshToken(ctx context.Context, hashedRef
 	}
 
 	return session, nil
+}
+
+func (r *userRepository) RevokeSession(ctx context.Context, sessionID string) error {
+	ctx, conn, err := r.db.EnsureConnFromCtx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer conn.Release()
+
+	query := `
+		UPDATE sessions
+		SET is_revoked = TRUE, revoked_at = NOW()
+		WHERE user_id = $1
+	`
+
+	_, err = conn.Exec(ctx, query, sessionID)
+	if err != nil {
+		r.log.Error(ctx, "Failed to revoke session", err)
+		return fmt.Errorf("failed to revoke session: %w", err)
+	}
+
+	return nil
 }

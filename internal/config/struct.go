@@ -12,8 +12,6 @@ type Config struct {
 	RedisConfig    RedisConfig    `mapstructure:"RedisConfig"`
 	AuthConfig     AuthConfig     `mapstructure:"AuthConfig"`
 	TokenConfig    TokenConfig    `mapstructure:"TokenConfig"`
-	OAuthConfig    OAuthConfig    `mapstructure:"OAuthConfig"`
-	PasswordConfig PasswordConfig `mapstructure:"PasswordConfig"`
 }
 
 type AppConfig struct {
@@ -60,17 +58,6 @@ type TokenConfig struct {
 	TokenIssuer string `mapstructure:"TOKEN_ISSUER"`
 }
 
-type OAuthConfig struct {
-	GoogleAuthClientID     string `mapstructure:"GOOGLE_AUTH_CLIENT_ID"`
-	GoogleAuthClientSecret string `mapstructure:"GOOGLE_AUTH_CLIENT_SECRET"`
-	GoogleAuthRedirectURI  string `mapstructure:"GOOGLE_AUTH_REDIRECT_URI"`
-}
-
-type PasswordConfig struct {
-	PasswordPepper string       `mapstructure:"PASSWORD_PEPPER"`
-	Argon2Params   Argon2Params `mapstructure:"ARGON2_PARAMS"`
-}
-
 type Argon2Params struct {
 	SaltLength  int `mapstructure:"SALT_LENGTH"`
 	Memory      int `mapstructure:"MEMORY"`
@@ -91,8 +78,8 @@ const (
 	defaultPostgresPort                  = "5432"
 	defaultPostgresUser                  = "postgres"
 	defaultPostgresPassword              = "postgres"
-	defaultPostgresDB                    = "trip_planner"
-	DefaultPostgresApplicationName       = "trip-planner"
+	defaultPostgresDB                    = "ticket-reservation-server"
+	DefaultPostgresApplicationName       = "ticket-reservation-server"
 	defaultPostgresSSLMode               = "disable"
 	defaultPostgresConnectTimeout        = 10 * time.Second
 	defaultPostgresMaxOpenConns          = 25
@@ -111,7 +98,7 @@ const (
 
 	// Token defaults
 	defaultTokenType   = "jwt"
-	defaultTokenIssuer = "trip-planner"
+	defaultTokenIssuer = "ticket-reservation-server"
 )
 
 const (

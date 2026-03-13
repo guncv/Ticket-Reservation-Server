@@ -61,10 +61,8 @@ func NewTestRedisClient(cfg *config.Config) (redisClient.RedisClient, error) {
 				DB:       0,
 			},
 			DatabaseConfig: cfg.DatabaseConfig,
-			PasswordConfig: cfg.PasswordConfig,
 			TokenConfig:    cfg.TokenConfig,
 			AuthConfig:     cfg.AuthConfig,
-			OAuthConfig:    cfg.OAuthConfig,
 		}
 
 		// Create logger for test redis

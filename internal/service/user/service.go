@@ -5,17 +5,19 @@ import (
 
 	"github.com/guncv/ticket-reservation-server/internal/config"
 	"github.com/guncv/ticket-reservation-server/internal/db"
-	"github.com/guncv/ticket-reservation-server/internal/domain/user/dto"
-	"github.com/guncv/ticket-reservation-server/internal/domain/user/repo"
-	"github.com/guncv/ticket-reservation-server/internal/domain/user/token"
 	"github.com/guncv/ticket-reservation-server/internal/infra/log"
 	"github.com/guncv/ticket-reservation-server/internal/infra/redis"
+	"github.com/guncv/ticket-reservation-server/internal/service/user/dto"
+	"github.com/guncv/ticket-reservation-server/internal/service/user/repo"
+	"github.com/guncv/ticket-reservation-server/internal/service/user/token"
 )
 
 type UserService interface {
 	HealthCheck(ctx context.Context) (*dto.HealthCheckResp, error)
 	CreateUser(ctx context.Context, req dto.CreateUserReq) (dto.CreateUserResp, error)
+	CreateAdminUser(ctx context.Context, req dto.CreateUserReq) (dto.CreateUserResp, error)
 	VerifyAndRenewToken(ctx context.Context, req dto.RenewTokenReq) (dto.RenewTokenResp, error)
+	LoginUser(ctx context.Context, req dto.LoginUserReq) (dto.LoginUserResp, error)
 }
 
 type userService struct {

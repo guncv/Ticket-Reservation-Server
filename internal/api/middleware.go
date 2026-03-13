@@ -8,8 +8,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/guncv/ticket-reservation-server/internal/config"
-	"github.com/guncv/ticket-reservation-server/internal/domain/user"
 	"github.com/guncv/ticket-reservation-server/internal/infra/log"
+	"github.com/guncv/ticket-reservation-server/internal/service/user"
 	"github.com/guncv/ticket-reservation-server/internal/shared"
 )
 

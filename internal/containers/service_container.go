@@ -1,7 +1,7 @@
 package containers
 
 import (
-	"github.com/guncv/ticket-reservation-server/internal/domain/user"
+	"github.com/guncv/ticket-reservation-server/internal/service/user"
 )
 
 func (c *Container) ServiceProvider() {

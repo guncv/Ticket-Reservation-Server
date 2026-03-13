@@ -80,7 +80,6 @@ func NewTestPgPool(cfg *config.Config) (*db.PgPool, error) {
 				HealthCheckPeriod:     shared.TestHealthCheckPeriod,
 				EventTimeout:          shared.TestEventTimeout,
 			},
-			PasswordConfig: cfg.PasswordConfig,
 		}
 
 		poolConfig, err := pgxpool.ParseConfig(connStr)
@@ -152,7 +151,7 @@ func TruncateAllTables() error {
 			AND state = 'idle in transaction';
 	`)
 
-	sql := `TRUNCATE TABLE users, user_auth_provider, user_session, user_email_verify_tokens, user_password_reset_tokens RESTART IDENTITY CASCADE;`
+	sql := `TRUNCATE TABLE users, sessions RESTART IDENTITY CASCADE;`
 
 	_, err := globalPool.Pool.Exec(globalCtx, sql)
 	return err
