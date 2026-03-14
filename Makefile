@@ -36,10 +36,10 @@ clear-db:
 	docker compose down -v --remove-orphans
 
 mock-gen:
-	mockery --all
+	mockery
 
 clean-mock:
-	rm -rf ./internal/mocks
+	rm -rf ./mocks
 
 test:
 	go test -v -cover ./...

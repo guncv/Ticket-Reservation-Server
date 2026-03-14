@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"strings"
 
@@ -40,25 +39,25 @@ func (m *authMiddleware) AuthMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authorizationHeader := ctx.GetHeader(shared.AuthorizationHeaderKey)
 		if len(authorizationHeader) == 0 {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, errors.New("authorization header is not provided"))
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "authorization header is not provided"})
 			return
 		}
 
 		fields := strings.Fields(authorizationHeader)
 		if len(fields) < 2 {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, errors.New("invalid authorization header format"))
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization header format"})
 			return
 		}
 
 		authorizationType := strings.ToLower(fields[0])
 		if authorizationType != shared.AuthorizationTypeBearer {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, errors.New("authorization header must start with "+shared.AuthorizationTypeBearer))
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "authorization header must start with " + shared.AuthorizationTypeBearer})
 			return
 		}
 
 		cookie, err := ctx.Request.Cookie(string(shared.RefreshTokenCookieKey))
 		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, errors.New("refresh token cookie not found"))
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "refresh token cookie not found"})
 			return
 		}
 
@@ -69,7 +68,7 @@ func (m *authMiddleware) AuthMiddleware() gin.HandlerFunc {
 
 		sessionResult, payload, err := m.sessionService.VerifyAndRenewToken(ctx, sessionReq)
 		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err)
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
 		}
 
