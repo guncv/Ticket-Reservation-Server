@@ -7,7 +7,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/guncv/ticket-reservation-server/internal/config"
 	"github.com/guncv/ticket-reservation-server/internal/infra/log"
 	"github.com/o1egl/paseto"
@@ -55,13 +54,11 @@ func (p *PasetoToken) GenerateAccessToken(userID string) (string, error) {
 	return token, nil
 }
 
-func (p *PasetoToken) GenerateRefreshToken() (string, time.Time, error) {
-	token := uuid.NewString()
-	expiresAt := time.Now().Add(p.cfg.AuthConfig.RefreshTokenDuration)
-	return token, expiresAt, nil
+func (p *PasetoToken) GenerateRefreshToken(userID string) (string, time.Time, error) {
+	return p.generateToken(userID, RefreshToken, p.cfg.AuthConfig.RefreshTokenDuration)
 }
 
-func (p *PasetoToken) VerifyAccessToken(tokenString string) (TokenPayload, error) {
+func (p *PasetoToken) VerifyToken(tokenString string) (TokenPayload, error) {
 	payload, err := p.decryptToken(tokenString)
 	if err != nil {
 		return TokenPayload{}, err

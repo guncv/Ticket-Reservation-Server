@@ -24,7 +24,7 @@ func (s *userService) CreateSession(ctx context.Context, userID string) (dto.Ses
 		return dto.SessionResp{}, err
 	}
 
-	refreshToken, expiresAt, err := s.token.GenerateRefreshToken()
+	refreshToken, expiresAt, err := s.token.GenerateRefreshToken(userID)
 	if err != nil {
 		s.log.Error(ctx, "Failed to generate refresh token", err)
 		return dto.SessionResp{}, err
@@ -65,17 +65,29 @@ func (s *userService) VerifyAndRenewToken(ctx context.Context, req dto.SessionRe
 	}
 	defer tx.Rollback(ctx)
 
-	payload, err := s.token.VerifyAccessToken(req.AccessToken)
-	if err == nil {
+	accessPayload, accessErr := s.token.VerifyToken(req.AccessToken)
+
+	if accessErr != nil && !errors.Is(accessErr, token.ErrTokenExpired) {
+		s.log.Error(ctx, "Invalid access token", accessErr)
+		return dto.SessionResp{}, token.TokenPayload{}, errors.New("invalid access token")
+	}
+
+	refreshPayload, refreshErr := s.token.VerifyToken(req.RefreshToken)
+	if refreshErr != nil {
+		s.log.Error(ctx, "Invalid refresh token", err)
+		return dto.SessionResp{}, refreshPayload, errors.New("invalid refresh token")
+	}
+
+	if refreshPayload.UserID != accessPayload.UserID {
+		s.log.Error(ctx, "Invalid refresh token", err)
+		return dto.SessionResp{}, refreshPayload, errors.New("invalid refresh token")
+	}
+
+	if accessErr == nil {
 		return dto.SessionResp{
 			AccessToken:  req.AccessToken,
 			RefreshToken: req.RefreshToken,
-		}, payload, nil
-	}
-
-	if !errors.Is(err, token.ErrTokenExpired) {
-		s.log.Error(ctx, "Invalid access token", err)
-		return dto.SessionResp{}, token.TokenPayload{}, errors.New("invalid access token")
+		}, accessPayload, nil
 	}
 
 	session, err := s.GetSessionByRefreshToken(ctx, req.RefreshToken)

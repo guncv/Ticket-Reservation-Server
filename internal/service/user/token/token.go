@@ -29,8 +29,8 @@ const (
 
 type Token interface {
 	GenerateAccessToken(userID string) (string, error)
-	GenerateRefreshToken() (string, time.Time, error)
-	VerifyAccessToken(token string) (TokenPayload, error)
+	GenerateRefreshToken(userID string) (string, time.Time, error)
+	VerifyToken(token string) (TokenPayload, error)
 }
 
 func NewToken(
