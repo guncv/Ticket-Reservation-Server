@@ -105,10 +105,14 @@ func (r *userRepository) RevokeSession(ctx context.Context, sessionID string) er
 	query := `
 		UPDATE sessions
 		SET is_revoked = TRUE, revoked_at = NOW()
-		WHERE user_id = $1
+		WHERE id = $1
 	`
 
-	_, err = conn.Exec(ctx, query, sessionID)
+	_, err = conn.Exec(
+		ctx,
+		query,
+		sessionID,
+	)
 	if err != nil {
 		r.log.Error(ctx, "Failed to revoke session", err)
 		return fmt.Errorf("failed to revoke session: %w", err)

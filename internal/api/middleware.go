@@ -10,6 +10,7 @@ import (
 	"github.com/guncv/ticket-reservation-server/internal/config"
 	"github.com/guncv/ticket-reservation-server/internal/infra/log"
 	"github.com/guncv/ticket-reservation-server/internal/service/user"
+	"github.com/guncv/ticket-reservation-server/internal/service/user/dto"
 	"github.com/guncv/ticket-reservation-server/internal/shared"
 )
 
@@ -55,29 +56,30 @@ func (m *authMiddleware) AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// cookie, err := ctx.Request.Cookie(string(shared.RefreshTokenCookieKey))
-		// if err != nil {
-		// 	ctx.AbortWithStatusJSON(http.StatusUnauthorized, errors.New("refresh token cookie not found"))
-		// 	return
-		// }
+		cookie, err := ctx.Request.Cookie(string(shared.RefreshTokenCookieKey))
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, errors.New("refresh token cookie not found"))
+			return
+		}
 
-		// sessionReq := &dto.SessionReq{
-		// 	AccessToken:  fields[1],
-		// 	RefreshToken: cookie.Value,
-		// }
+		sessionReq := dto.SessionReq{
+			AccessToken:  fields[1],
+			RefreshToken: cookie.Value,
+		}
 
-		// sessionResult, err := m.sessionService.VerifyAndRenewToken(ctx, sessionReq)
-		// if err != nil {
-		// 	ctx.AbortWithStatusJSON(http.StatusUnauthorized, err)
-		// 	return
-		// }
+		sessionResult, payload, err := m.sessionService.VerifyAndRenewToken(ctx, sessionReq)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err)
+			return
+		}
 
-		// if sessionResult.AccessToken != sessionReq.AccessToken {
-		// 	ctx.Header(shared.XAccessTokenHeaderKey, sessionResult.AccessToken)
-		// }
+		if sessionResult.AccessToken != sessionReq.AccessToken {
+			ctx.Header(shared.XAccessTokenHeaderKey, sessionResult.AccessToken)
+		}
 
-		// reqCtx := context.WithValue(ctx.Request.Context(), shared.UserIDKey, sessionResult.UserID)
-		// ctx.Request = ctx.Request.WithContext(reqCtx)
+		reqCtx := context.WithValue(ctx.Request.Context(), shared.UserIDKey, payload.UserID)
+		reqCtx = context.WithValue(reqCtx, shared.RefreshTokenKey, sessionResult.RefreshToken)
+		ctx.Request = ctx.Request.WithContext(reqCtx)
 
 		ctx.Next()
 	}

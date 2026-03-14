@@ -6,15 +6,8 @@ import (
 	"github.com/guncv/ticket-reservation-server/internal/service/user/dto"
 	"github.com/guncv/ticket-reservation-server/internal/service/user/repo"
 	"github.com/guncv/ticket-reservation-server/internal/service/user/user"
+	"github.com/guncv/ticket-reservation-server/internal/shared"
 )
-
-func (s *userService) CreateUser(ctx context.Context, req dto.CreateUserReq) (dto.CreateUserResp, error) {
-	return s.createUser(ctx, req, dto.UserRoleUser)
-}
-
-func (s *userService) CreateAdminUser(ctx context.Context, req dto.CreateUserReq) (dto.CreateUserResp, error) {
-	return s.createUser(ctx, req, dto.UserRoleAdmin)
-}
 
 func (s *userService) createUser(ctx context.Context, req dto.CreateUserReq, role dto.UserRole) (dto.CreateUserResp, error) {
 	ctx, tx, err := s.db.EnsureTxFromCtx(ctx)
@@ -63,6 +56,14 @@ func (s *userService) createUser(ctx context.Context, req dto.CreateUserReq, rol
 	}, nil
 }
 
+func (s *userService) CreateUser(ctx context.Context, req dto.CreateUserReq) (dto.CreateUserResp, error) {
+	return s.createUser(ctx, req, dto.UserRoleUser)
+}
+
+func (s *userService) CreateAdminUser(ctx context.Context, req dto.CreateUserReq) (dto.CreateUserResp, error) {
+	return s.createUser(ctx, req, dto.UserRoleAdmin)
+}
+
 func (s *userService) LoginUser(ctx context.Context, req dto.LoginUserReq) (dto.LoginUserResp, error) {
 	ctx, tx, err := s.db.EnsureTxFromCtx(ctx)
 	if err != nil {
@@ -96,22 +97,31 @@ func (s *userService) LoginUser(ctx context.Context, req dto.LoginUserReq) (dto.
 	}, nil
 }
 
-// func (s *userService) LogoutUser(ctx context.Context, userID string) error {
-// 	ctx, tx, err := s.db.EnsureTxFromCtx(ctx)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer tx.Rollback(ctx)
+func (s *userService) LogoutUser(ctx context.Context) error {
+	ctx, tx, err := s.db.EnsureTxFromCtx(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
 
-// 	err = s.userRepo.RevokeSession(ctx, userID)
-// 	if err != nil {
-// 		return err
-// 	}
+	refreshToken, err := shared.GetRefreshTokenFromContext(ctx)
+	if err != nil {
+		return err
+	}
 
-// 	err = tx.Commit(ctx)
-// 	if err != nil {
-// 		return err
-// 	}
+	session, err := s.GetSessionByRefreshToken(ctx, refreshToken)
+	if err != nil {
+		return err
+	}
 
-// 	return nil
-// }
+	err = s.userRepo.RevokeSession(ctx, session.ID)
+	if err != nil {
+		return err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}

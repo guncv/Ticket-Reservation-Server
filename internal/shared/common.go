@@ -20,6 +20,7 @@ const (
 	UserAgentKey            = "user-agent"
 	ClientIPKey             = "client-ip"
 	UserIDKey               = "user-id"
+	RefreshTokenKey         = "refresh-token"
 )
 
 const (

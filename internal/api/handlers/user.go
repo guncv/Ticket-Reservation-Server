@@ -28,16 +28,6 @@ func NewUserHandler(
 	}
 }
 
-func (h *UserHandler) HealthCheck(c *gin.Context) {
-	result, err := h.userSrv.HealthCheck(c.Request.Context())
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, result)
-}
-
 func (h *UserHandler) CreateUser(c *gin.Context) {
 	var req dto.CreateUserReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -72,4 +62,15 @@ func (h *UserHandler) LoginUser(c *gin.Context) {
 	h.cookies.SetRefreshTokenCookie(c, userResp.RefreshToken)
 
 	c.JSON(http.StatusOK, userResp)
+}
+
+func (h *UserHandler) LogoutUser(c *gin.Context) {
+	err := h.userSrv.LogoutUser(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	h.cookies.ClearRefreshTokenCookie(c)
+	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
 }

@@ -2,17 +2,12 @@ package dto
 
 import "time"
 
-type CreateSessionResp struct {
+type SessionReq struct {
 	AccessToken  string
 	RefreshToken string
 }
 
-type RenewTokenReq struct {
-	AccessToken  string
-	RefreshToken string
-}
-
-type RenewTokenResp struct {
+type SessionResp struct {
 	AccessToken  string
 	RefreshToken string
 }

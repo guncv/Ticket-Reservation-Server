@@ -13,11 +13,11 @@ import (
 )
 
 type UserService interface {
-	HealthCheck(ctx context.Context) (*dto.HealthCheckResp, error)
 	CreateUser(ctx context.Context, req dto.CreateUserReq) (dto.CreateUserResp, error)
 	CreateAdminUser(ctx context.Context, req dto.CreateUserReq) (dto.CreateUserResp, error)
-	VerifyAndRenewToken(ctx context.Context, req dto.RenewTokenReq) (dto.RenewTokenResp, error)
+	VerifyAndRenewToken(ctx context.Context, req dto.SessionReq) (dto.SessionResp, token.TokenPayload, error)
 	LoginUser(ctx context.Context, req dto.LoginUserReq) (dto.LoginUserResp, error)
+	LogoutUser(ctx context.Context) error
 }
 
 type userService struct {
@@ -45,20 +45,4 @@ func NewUserService(
 		log:      logger,
 		redis:    redis,
 	}
-}
-
-func (s *userService) HealthCheck(ctx context.Context) (*dto.HealthCheckResp, error) {
-	ctx, tx, err := s.db.EnsureTxFromCtx(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback(ctx)
-
-	result, err := s.userRepo.HealthCheck(ctx)
-	if err != nil {
-		s.log.Error(ctx, "Failed to health check", err)
-		return nil, err
-	}
-
-	return &dto.HealthCheckResp{Status: result}, nil
 }

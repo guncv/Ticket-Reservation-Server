@@ -7,10 +7,6 @@ const (
 	UserRoleUser  UserRole = "user"
 )
 
-type HealthCheckResp struct {
-	Status string `json:"status"`
-}
-
 type CreateUserReq struct {
 	UserName string `json:"user_name"`
 	Password string `json:"password"`

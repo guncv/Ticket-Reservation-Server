@@ -18,7 +18,6 @@ type TokenPayload struct {
 	UserID    string
 	IssuedAt  time.Time
 	ExpiresAt time.Time
-	Type      TokenType
 }
 
 type TokenType string
@@ -31,7 +30,7 @@ const (
 type Token interface {
 	GenerateAccessToken(userID string) (string, error)
 	GenerateRefreshToken() (string, time.Time, error)
-	VerifyAccessToken(token string) (*TokenPayload, error)
+	VerifyAccessToken(token string) (TokenPayload, error)
 }
 
 func NewToken(

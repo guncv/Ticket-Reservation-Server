@@ -42,7 +42,9 @@ func RegisterRoutes(e *gin.Engine, c *dig.Container, cfg *config.Config) {
 func userRoutes(api_v1 *gin.RouterGroup, userHandler *handlers.UserHandler, authMiddleware AuthMiddleware) {
 	userRoutes := api_v1.Group("/user")
 
-	userRoutes.GET("/health", userHandler.HealthCheck)
 	userRoutes.POST("/register", userHandler.CreateUser)
 	userRoutes.GET("/login", userHandler.LoginUser)
+
+	userMiddleware := authMiddleware.AuthMiddleware()
+	userRoutes.POST("/logout", userMiddleware, userHandler.LogoutUser)
 }

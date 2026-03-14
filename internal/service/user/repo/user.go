@@ -5,10 +5,6 @@ import (
 	"fmt"
 )
 
-func (r *userRepository) HealthCheck(ctx context.Context) (string, error) {
-	return "ok", nil
-}
-
 type CreateUserParams struct {
 	UserName       string
 	HashedPassword string

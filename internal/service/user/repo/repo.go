@@ -17,7 +17,6 @@ type User struct {
 }
 
 type UserRepository interface {
-	HealthCheck(ctx context.Context) (string, error)
 	CreateUser(ctx context.Context, params CreateUserParams) (string, error)
 	CheckUserNameExists(ctx context.Context, userName string) (bool, error)
 	GetUserByUserName(ctx context.Context, userName string) (User, error)

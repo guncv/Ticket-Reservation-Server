@@ -47,19 +47,14 @@ func (j *JWTToken) GenerateRefreshToken() (string, time.Time, error) {
 	return token, expiresAt, nil
 }
 
-func (j *JWTToken) VerifyAccessToken(tokenString string) (*TokenPayload, error) {
+func (j *JWTToken) VerifyAccessToken(tokenString string) (TokenPayload, error) {
 	payload, err := j.parseToken(tokenString)
 	if err != nil {
-		return nil, err
-	}
-
-	if payload.Type != AccessToken {
-		return nil, ErrTokenInvalid
+		return TokenPayload{}, err
 	}
 
 	return payload, nil
 }
-
 
 func (j *JWTToken) generateToken(
 	userID string, tokenType TokenType, duration time.Duration,
@@ -86,7 +81,7 @@ func (j *JWTToken) generateToken(
 	return signedToken, expiresAt, nil
 }
 
-func (j *JWTToken) parseToken(tokenString string) (*TokenPayload, error) {
+func (j *JWTToken) parseToken(tokenString string) (TokenPayload, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("invalid token signing method")
@@ -96,20 +91,19 @@ func (j *JWTToken) parseToken(tokenString string) (*TokenPayload, error) {
 
 	if err != nil {
 		if errors.Is(err, jwt.ErrTokenExpired) {
-			return nil, ErrTokenExpired
+			return TokenPayload{}, ErrTokenExpired
 		}
-		return nil, ErrTokenInvalid
+		return TokenPayload{}, ErrTokenInvalid
 	}
 
 	claims, ok := token.Claims.(*JWTClaims)
 	if !ok || !token.Valid {
-		return nil, ErrTokenInvalid
+		return TokenPayload{}, ErrTokenInvalid
 	}
 
-	return &TokenPayload{
+	return TokenPayload{
 		UserID:    claims.UserID,
 		IssuedAt:  claims.IssuedAt.Time,
 		ExpiresAt: claims.ExpiresAt.Time,
-		Type:      claims.Type,
 	}, nil
 }
