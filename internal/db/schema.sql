@@ -1,4 +1,4 @@
-\restrict ePkrQEcwvBuhdvUL3Jtk7V80JNv69CoW4HxSBWFNgWL8hjwqlhacJQY6adVzHDG
+\restrict 17Qsw9NAd6EtEfrs0wYW1QIUXPz0bsBU9pkLgQVcwL63O9PjQDtpGnEAYD7fD19
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1 (Homebrew)
@@ -18,6 +18,20 @@ SET row_security = off;
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
+
+--
+-- Name: events; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.events (
+    id uuid DEFAULT uuidv7() NOT NULL,
+    title character varying(255) NOT NULL,
+    description text,
+    price numeric(10,2) NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
 
 --
 -- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
@@ -56,6 +70,20 @@ CREATE TABLE public.sessions (
 
 
 --
+-- Name: tickets; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.tickets (
+    id uuid DEFAULT uuidv7() NOT NULL,
+    event_id uuid,
+    user_id uuid,
+    status character varying(20) NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
 -- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -67,6 +95,14 @@ CREATE TABLE public.users (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
+
+
+--
+-- Name: events events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.events
+    ADD CONSTRAINT events_pkey PRIMARY KEY (id);
 
 
 --
@@ -94,6 +130,14 @@ ALTER TABLE ONLY public.sessions
 
 
 --
+-- Name: tickets tickets_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tickets
+    ADD CONSTRAINT tickets_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -107,6 +151,13 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_user_name_key UNIQUE (user_name);
+
+
+--
+-- Name: idx_tickets_available; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_tickets_available ON public.tickets USING btree (event_id, status);
 
 
 --
@@ -125,10 +176,26 @@ ALTER TABLE ONLY public.sessions
 
 
 --
+-- Name: tickets tickets_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tickets
+    ADD CONSTRAINT tickets_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tickets tickets_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tickets
+    ADD CONSTRAINT tickets_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ePkrQEcwvBuhdvUL3Jtk7V80JNv69CoW4HxSBWFNgWL8hjwqlhacJQY6adVzHDG
+\unrestrict 17Qsw9NAd6EtEfrs0wYW1QIUXPz0bsBU9pkLgQVcwL63O9PjQDtpGnEAYD7fD19
 
 
 --
@@ -137,4 +204,5 @@ ALTER TABLE ONLY public.sessions
 
 INSERT INTO public.schema_migrations (version) VALUES
     ('20251223172120'),
-    ('20260312125232');
+    ('20260312125232'),
+    ('20260315083501');

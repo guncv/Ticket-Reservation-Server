@@ -43,7 +43,7 @@ func userRoutes(api_v1 *gin.RouterGroup, userHandler *handlers.UserHandler, auth
 	userRoutes := api_v1.Group("/user")
 
 	userRoutes.POST("/register", userHandler.CreateUser)
-	userRoutes.GET("/login", userHandler.LoginUser)
+	userRoutes.POST("/login", userHandler.LoginUser)
 
 	userMiddleware := authMiddleware.AuthMiddleware()
 	userRoutes.POST("/logout", userMiddleware, userHandler.LogoutUser)
