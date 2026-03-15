@@ -3,6 +3,8 @@ package repo
 import (
 	"context"
 	"fmt"
+
+	"github.com/guncv/ticket-reservation-server/internal/service/user/dto"
 )
 
 type CreateUserParams struct {
@@ -55,10 +57,10 @@ func (r *userRepository) CheckUserNameExists(ctx context.Context, userName strin
 	return exists, nil
 }
 
-func (r *userRepository) GetUserByUserName(ctx context.Context, userName string) (User, error) {
+func (r *userRepository) GetUserByUserName(ctx context.Context, userName string) (dto.User, error) {
 	ctx, conn, err := r.db.EnsureConnFromCtx(ctx)
 	if err != nil {
-		return User{}, fmt.Errorf("failed to get connection: %w", err)
+		return dto.User{}, fmt.Errorf("failed to get connection: %w", err)
 	}
 	defer conn.Release()
 
@@ -68,11 +70,11 @@ func (r *userRepository) GetUserByUserName(ctx context.Context, userName string)
 		WHERE user_name = $1
 	`
 
-	var u User
+	var u dto.User
 	err = conn.QueryRow(ctx, query, userName).Scan(&u.ID, &u.UserName, &u.HashedPassword, &u.Role)
 	if err != nil {
 		r.log.Error(ctx, "Failed to get user by user name", err)
-		return User{}, fmt.Errorf("failed to get user by user name: %w", err)
+		return dto.User{}, fmt.Errorf("failed to get user by user name: %w", err)
 	}
 
 	return u, nil

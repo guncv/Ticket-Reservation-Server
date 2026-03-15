@@ -113,6 +113,12 @@ func (s *userService) VerifyAndRenewToken(ctx context.Context, req dto.SessionRe
 }
 
 func (s *userService) GetSessionByRefreshToken(ctx context.Context, refreshToken string) (dto.Session, error) {
+	ctx, tx, err := s.db.EnsureTxFromCtx(ctx)
+	if err != nil {
+		return dto.Session{}, err
+	}
+	defer tx.Rollback(ctx)
+
 	hashedRefreshToken := user.HashRefreshToken(refreshToken)
 	session, err := s.userRepo.GetSessionByRefreshToken(ctx, hashedRefreshToken)
 	if err != nil {
@@ -123,6 +129,10 @@ func (s *userService) GetSessionByRefreshToken(ctx context.Context, refreshToken
 	err = user.VerifySession(session)
 	if err != nil {
 		s.log.Error(ctx, "Failed to verify session", err)
+		return dto.Session{}, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
 		return dto.Session{}, err
 	}
 

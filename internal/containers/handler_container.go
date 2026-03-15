@@ -6,4 +6,8 @@ func (c *Container) HandlerProvider() {
 	if err := c.Container.Provide(handlers.NewUserHandler); err != nil {
 		c.Error = err
 	}
+
+	if err := c.Container.Provide(handlers.NewEventHandler); err != nil {
+		c.Error = err
+	}
 }

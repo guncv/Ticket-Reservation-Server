@@ -30,10 +30,12 @@ func RegisterRoutes(e *gin.Engine, c *dig.Container, cfg *config.Config) {
 
 	if err := c.Invoke(func(
 		userHandler *handlers.UserHandler,
+		eventHandler *handlers.EventHandler,
 		authMiddleware AuthMiddleware,
 	) {
 		api_v1 := e.Group("/api/v1")
 		userRoutes(api_v1, userHandler, authMiddleware)
+		eventRoutes(api_v1, eventHandler, authMiddleware)
 	}); err != nil {
 		panic(err)
 	}
@@ -47,4 +49,15 @@ func userRoutes(api_v1 *gin.RouterGroup, userHandler *handlers.UserHandler, auth
 
 	userMiddleware := authMiddleware.AuthMiddleware()
 	userRoutes.POST("/logout", userMiddleware, userHandler.LogoutUser)
+}
+
+func eventRoutes(api_v1 *gin.RouterGroup, eventHandler *handlers.EventHandler, authMiddleware AuthMiddleware) {
+	eventRoutes := api_v1.Group("/event")
+
+	eventMiddleware := authMiddleware.AuthMiddleware()
+	eventRoutes.POST("/", eventMiddleware, eventHandler.CreateEvent)
+	eventRoutes.PUT("/:id", eventMiddleware, eventHandler.UpdateEvent)
+	eventRoutes.GET("/", eventMiddleware, eventHandler.GetAllEvents)
+	eventRoutes.GET("/:id", eventMiddleware, eventHandler.GetEventByID)
+	eventRoutes.POST("/ticket", eventMiddleware, eventHandler.ReserveEventTicket)
 }

@@ -26,3 +26,10 @@ type LoginUserResp struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"-"` // Only set in HttpOnly cookie, never in JSON body
 }
+
+type User struct {
+	ID             string
+	UserName       string
+	HashedPassword string
+	Role           string
+}

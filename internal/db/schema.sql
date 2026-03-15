@@ -1,4 +1,4 @@
-\restrict 17Qsw9NAd6EtEfrs0wYW1QIUXPz0bsBU9pkLgQVcwL63O9PjQDtpGnEAYD7fD19
+\restrict oJr8NTGOTQfj0A5QUwtgBpXyFUh3VCIrlfRfIrSTLvcWR7gB3ylDTbpdbdiGVxl
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1 (Homebrew)
@@ -25,9 +25,10 @@ SET default_table_access_method = heap;
 
 CREATE TABLE public.events (
     id uuid DEFAULT uuidv7() NOT NULL,
-    title character varying(255) NOT NULL,
-    description text,
-    price numeric(10,2) NOT NULL,
+    title text NOT NULL,
+    description text NOT NULL,
+    price numeric NOT NULL,
+    total_tickets integer NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -75,7 +76,7 @@ CREATE TABLE public.sessions (
 
 CREATE TABLE public.tickets (
     id uuid DEFAULT uuidv7() NOT NULL,
-    event_id uuid,
+    event_id uuid NOT NULL,
     user_id uuid,
     status character varying(20) NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
@@ -103,6 +104,14 @@ CREATE TABLE public.users (
 
 ALTER TABLE ONLY public.events
     ADD CONSTRAINT events_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: events events_title_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.events
+    ADD CONSTRAINT events_title_key UNIQUE (title);
 
 
 --
@@ -180,7 +189,7 @@ ALTER TABLE ONLY public.sessions
 --
 
 ALTER TABLE ONLY public.tickets
-    ADD CONSTRAINT tickets_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id) ON DELETE CASCADE;
+    ADD CONSTRAINT tickets_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id) ON DELETE RESTRICT;
 
 
 --
@@ -188,14 +197,14 @@ ALTER TABLE ONLY public.tickets
 --
 
 ALTER TABLE ONLY public.tickets
-    ADD CONSTRAINT tickets_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+    ADD CONSTRAINT tickets_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE RESTRICT;
 
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 17Qsw9NAd6EtEfrs0wYW1QIUXPz0bsBU9pkLgQVcwL63O9PjQDtpGnEAYD7fD19
+\unrestrict oJr8NTGOTQfj0A5QUwtgBpXyFUh3VCIrlfRfIrSTLvcWR7gB3ylDTbpdbdiGVxl
 
 
 --
