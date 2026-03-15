@@ -8,10 +8,10 @@ import (
 	"github.com/guncv/ticket-reservation-server/internal/service/event/dto"
 )
 
-func (r *eventRepository) CreateEvent(ctx context.Context, event dto.CreateEventReq) error {
+func (r *eventRepository) CreateEvent(ctx context.Context, event dto.CreateEventReq) (uuid.UUID, error) {
 	ctx, conn, err := r.db.EnsureConnFromCtx(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
+		return uuid.Nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer conn.Release()
 
@@ -31,16 +31,16 @@ func (r *eventRepository) CreateEvent(ctx context.Context, event dto.CreateEvent
 	).Scan(&eventID)
 	if err != nil {
 		r.log.Error(ctx, "Failed to create event", err)
-		return fmt.Errorf("failed to create event: %w", err)
+		return uuid.Nil, fmt.Errorf("failed to create event: %w", err)
 	}
 
 	if event.TotalTickets > 0 {
 		if err := r.CreateTicketsForEvent(ctx, eventID, event.TotalTickets); err != nil {
-			return err
+			return uuid.Nil, err
 		}
 	}
 
-	return nil
+	return eventID, nil
 }
 
 func (r *eventRepository) UpdateEvent(ctx context.Context, event dto.UpdateEventReq, previousTotalTickets int) error {

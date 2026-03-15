@@ -12,9 +12,11 @@ const (
 )
 
 type ReserveEventTicketReq struct {
-	EventID uuid.UUID `json:"event_id"`
+	EventID  uuid.UUID `json:"event_id"`
+	Quantity int       `json:"quantity"`
 }
 
 type ReserveEventTicketRes struct {
-	TicketID uuid.UUID `json:"ticket_id"`
+	ReservationID uuid.UUID   `json:"reservation_id"`
+	TicketIDs     []uuid.UUID `json:"ticket_ids"`
 }

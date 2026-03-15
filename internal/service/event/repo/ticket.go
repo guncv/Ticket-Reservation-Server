@@ -6,9 +6,10 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/guncv/ticket-reservation-server/internal/service/event/dto"
 )
+
+var ErrNoAvailableTickets = errors.New("no available tickets")
 
 func (r *eventRepository) CreateTicketsForEvent(ctx context.Context, eventID uuid.UUID, count int) error {
 	if count <= 0 {
@@ -35,45 +36,78 @@ func (r *eventRepository) CreateTicketsForEvent(ctx context.Context, eventID uui
 	return nil
 }
 
-var ErrNoAvailableTickets = errors.New("no available tickets")
+func (r *eventRepository) ReserveTickets(ctx context.Context, eventID, userID uuid.UUID, quantity int) (dto.ReserveEventTicketRes, error) {
+	if quantity <= 0 {
+		return dto.ReserveEventTicketRes{}, nil
+	}
 
-func (r *eventRepository) ReserveTicket(ctx context.Context, eventID, userID uuid.UUID) (uuid.UUID, error) {
 	ctx, conn, err := r.db.EnsureConnFromCtx(ctx)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("failed to get connection: %w", err)
+		return dto.ReserveEventTicketRes{}, fmt.Errorf("failed to get connection: %w", err)
 	}
 	defer conn.Release()
 
-	query := `
+	// Create reservation
+	var reservationID uuid.UUID
+	createReservationQuery := `
+		INSERT INTO reservations (event_id, user_id)
+		VALUES ($1, $2)
+		RETURNING id
+	`
+	err = conn.QueryRow(ctx, createReservationQuery, eventID, userID).Scan(&reservationID)
+	if err != nil {
+		r.log.Error(ctx, "Failed to create reservation", err)
+		return dto.ReserveEventTicketRes{}, fmt.Errorf("failed to create reservation: %w", err)
+	}
+
+	// Reserve tickets
+	reserveTicketsQuery := `
 		UPDATE tickets
-		SET user_id = $1,
+		SET reservation_id = $1,
 			status = $2,
 			updated_at = NOW()
-		WHERE id = (
+		WHERE id IN (
 			SELECT id FROM tickets
 			WHERE event_id = $3 AND status = $4
-			LIMIT 1
+			LIMIT $5
 			FOR UPDATE SKIP LOCKED
 		)
 		RETURNING id
 	`
 
-	var ticketID uuid.UUID
-	err = conn.QueryRow(
+	rows, err := conn.Query(
 		ctx,
-		query,
-		userID,
+		reserveTicketsQuery,
+		reservationID,
 		dto.TicketStatusSold,
 		eventID,
 		dto.TicketStatusAvailable,
-	).Scan(&ticketID)
+		quantity,
+	)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return uuid.Nil, ErrNoAvailableTickets
+		r.log.Error(ctx, "Failed to reserve tickets", err)
+		return dto.ReserveEventTicketRes{}, fmt.Errorf("failed to reserve tickets: %w", err)
+	}
+	defer rows.Close()
+
+	var ticketIDs []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return dto.ReserveEventTicketRes{}, fmt.Errorf("failed to scan ticket id: %w", err)
 		}
-		r.log.Error(ctx, "Failed to reserve ticket", err)
-		return uuid.Nil, fmt.Errorf("failed to reserve ticket: %w", err)
+		ticketIDs = append(ticketIDs, id)
+	}
+	if err := rows.Err(); err != nil {
+		return dto.ReserveEventTicketRes{}, fmt.Errorf("failed to iterate ticket rows: %w", err)
 	}
 
-	return ticketID, nil
+	if len(ticketIDs) < quantity {
+		return dto.ReserveEventTicketRes{}, ErrNoAvailableTickets
+	}
+
+	return dto.ReserveEventTicketRes{
+		ReservationID: reservationID,
+		TicketIDs:     ticketIDs,
+	}, nil
 }

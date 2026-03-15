@@ -58,6 +58,6 @@ func eventRoutes(api_v1 *gin.RouterGroup, eventHandler *handlers.EventHandler, a
 	eventRoutes.POST("/", eventMiddleware, eventHandler.CreateEvent)
 	eventRoutes.PUT("/:id", eventMiddleware, eventHandler.UpdateEvent)
 	eventRoutes.GET("/", eventMiddleware, eventHandler.GetAllEvents)
-	eventRoutes.GET("/:id", eventMiddleware, eventHandler.GetEventByID)
+	eventRoutes.GET("/reservations", eventMiddleware, eventHandler.GetAllReservations)
 	eventRoutes.POST("/ticket", eventMiddleware, eventHandler.ReserveEventTicket)
 }

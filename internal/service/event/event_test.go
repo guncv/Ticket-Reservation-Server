@@ -100,11 +100,12 @@ func TestCreateEvent(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.name == "Error_DuplicateTitle" {
-				require.NoError(t, eventService.CreateEvent(context.Background(), validCreateReq()))
+				_, err := eventService.CreateEvent(context.Background(), validCreateReq())
+				require.NoError(t, err)
 			}
 
-			actualErr := eventService.CreateEvent(context.Background(), tc.req())
-			tc.verify(t, actualErr)
+			_, err := eventService.CreateEvent(context.Background(), tc.req())
+			tc.verify(t, err)
 
 			require.NoError(t, test.TruncateAllTables())
 		})
@@ -116,13 +117,9 @@ func TestUpdateEvent(t *testing.T) {
 
 	createAndGetID := func(t *testing.T) uuid.UUID {
 		t.Helper()
-		err := eventService.CreateEvent(context.Background(), validCreateReq())
+		eventID, err := eventService.CreateEvent(context.Background(), validCreateReq())
 		require.NoError(t, err)
-
-		events, err := eventService.GetAllEvents(context.Background())
-		require.NoError(t, err)
-		require.Len(t, events, 1)
-		return events[0].ID
+		return eventID
 	}
 
 	testCases := []struct {
@@ -200,7 +197,8 @@ func TestUpdateEvent(t *testing.T) {
 
 				otherReq := validCreateReq()
 				otherReq.Title = "Another Event Title"
-				require.NoError(t, eventService.CreateEvent(context.Background(), otherReq))
+				_, err := eventService.CreateEvent(context.Background(), otherReq)
+				require.NoError(t, err)
 
 				return dto.UpdateEventReq{
 					ID:           id,

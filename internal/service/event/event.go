@@ -8,31 +8,32 @@ import (
 	"github.com/guncv/ticket-reservation-server/internal/service/event/event"
 )
 
-func (s *eventService) CreateEvent(ctx context.Context, req dto.CreateEventReq) error {
+func (s *eventService) CreateEvent(ctx context.Context, req dto.CreateEventReq) (uuid.UUID, error) {
 	ctx, tx, err := s.db.EnsureTxFromCtx(ctx)
 	if err != nil {
-		return err
+		return uuid.Nil, err
 	}
 	defer tx.Rollback(ctx)
 
 	exists, err := s.eventRepo.CheckEventTitleExists(ctx, req.Title, uuid.Nil)
 	if err != nil {
-		return err
+		return uuid.Nil, err
 	}
 
 	if err := event.ValidateCreateEvent(req, exists); err != nil {
-		return err
+		return uuid.Nil, err
 	}
 
-	if err := s.eventRepo.CreateEvent(ctx, req); err != nil {
-		return err
+	eventID, err := s.eventRepo.CreateEvent(ctx, req)
+	if err != nil {
+		return uuid.Nil, err
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return err
+		return uuid.Nil, err
 	}
 
-	return nil
+	return eventID, nil
 }
 
 func (s *eventService) UpdateEvent(ctx context.Context, req dto.UpdateEventReq) error {
@@ -84,23 +85,4 @@ func (s *eventService) GetAllEvents(ctx context.Context) ([]dto.Event, error) {
 	}
 
 	return events, nil
-}
-
-func (s *eventService) GetEventByID(ctx context.Context, id uuid.UUID) (dto.Event, error) {
-	ctx, tx, err := s.db.EnsureTxFromCtx(ctx)
-	if err != nil {
-		return dto.Event{}, err
-	}
-	defer tx.Rollback(ctx)
-
-	event, err := s.eventRepo.GetEventByID(ctx, id)
-	if err != nil {
-		return dto.Event{}, err
-	}
-
-	if err := tx.Commit(ctx); err != nil {
-		return dto.Event{}, err
-	}
-
-	return event, nil
 }

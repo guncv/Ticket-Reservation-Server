@@ -10,6 +10,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+var seededAdminUserID string
+
 func init() {
 	if err := registerSeed(seedUserAdminUp, seedUserAdminDown); err != nil {
 		panic(err)
@@ -20,21 +22,21 @@ func seedUserAdminUp(ctx context.Context, pool *pgxpool.Pool, cfg *config.Config
 	c := containers.NewContainer(cfg)
 
 	var userService user.UserService
-	if err := c.Container.Invoke(func(
-		us user.UserService,
-	) {
+	if err := c.Container.Invoke(func(us user.UserService) {
 		userService = us
 	}); err != nil {
 		return err
 	}
 
-	_, err := userService.CreateAdminUser(ctx, dto.CreateUserReq{
+	resp, err := userService.CreateAdminUser(ctx, dto.CreateUserReq{
 		UserName: "admin",
 		Password: "password",
 	})
 	if err != nil {
 		return err
 	}
+
+	seededAdminUserID = resp.UserID
 
 	return nil
 }

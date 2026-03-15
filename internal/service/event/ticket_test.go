@@ -47,13 +47,9 @@ func TestReserveEventTicket(t *testing.T) {
 
 	createEventAndGetID := func(t *testing.T) uuid.UUID {
 		t.Helper()
-		err := eventService.CreateEvent(context.Background(), validCreateReqWithTitle("reserve_"+uuid.New().String()))
+		eventID, err := eventService.CreateEvent(context.Background(), validCreateReqWithTitle("reserve_"+uuid.New().String()))
 		require.NoError(t, err)
-
-		events, err := eventService.GetAllEvents(context.Background())
-		require.NoError(t, err)
-		require.Len(t, events, 1)
-		return events[0].ID
+		return eventID
 	}
 
 	testCases := []struct {
@@ -70,11 +66,13 @@ func TestReserveEventTicket(t *testing.T) {
 			},
 			req: func(t *testing.T) dto.ReserveEventTicketReq {
 				eventID := createEventAndGetID(t)
-				return dto.ReserveEventTicketReq{EventID: eventID}
+				return dto.ReserveEventTicketReq{EventID: eventID, Quantity: 1}
 			},
 			verify: func(t *testing.T, res dto.ReserveEventTicketRes, actualErr error) {
 				require.NoError(t, actualErr)
-				require.NotEqual(t, uuid.Nil, res.TicketID)
+				require.NotEqual(t, uuid.Nil, res.ReservationID)
+				require.Len(t, res.TicketIDs, 1)
+				require.NotEqual(t, uuid.Nil, res.TicketIDs[0])
 			},
 		},
 		{
@@ -87,15 +85,56 @@ func TestReserveEventTicket(t *testing.T) {
 				eventID := createEventAndGetID(t)
 
 				userAID := createUserAndGetID(t, userService)
-				res, err := eventService.ReserveEventTicket(ctxWithUserID(userAID), dto.ReserveEventTicketReq{EventID: eventID})
+				res, err := eventService.ReserveEventTicket(ctxWithUserID(userAID), dto.ReserveEventTicketReq{EventID: eventID, Quantity: 1})
 				require.NoError(t, err)
-				require.NotEqual(t, uuid.Nil, res.TicketID)
+				require.NotEqual(t, uuid.Nil, res.ReservationID)
+				require.Len(t, res.TicketIDs, 1)
+				require.NotEqual(t, uuid.Nil, res.TicketIDs[0])
 
-				return dto.ReserveEventTicketReq{EventID: eventID}
+				return dto.ReserveEventTicketReq{EventID: eventID, Quantity: 1}
 			},
 			verify: func(t *testing.T, res dto.ReserveEventTicketRes, actualErr error) {
 				require.NoError(t, actualErr)
-				require.NotEqual(t, uuid.Nil, res.TicketID)
+				require.NotEqual(t, uuid.Nil, res.ReservationID)
+				require.Len(t, res.TicketIDs, 1)
+				require.NotEqual(t, uuid.Nil, res.TicketIDs[0])
+			},
+		},
+		{
+			name: "Error_ReserveQuantityExceeded",
+			ctx: func(t *testing.T) context.Context {
+				userID := createUserAndGetID(t, userService)
+				return ctxWithUserID(userID)
+			},
+			req: func(t *testing.T) dto.ReserveEventTicketReq {
+				eventID := createEventAndGetID(t)
+				return dto.ReserveEventTicketReq{EventID: eventID, Quantity: 11}
+			},
+			verify: func(t *testing.T, res dto.ReserveEventTicketRes, actualErr error) {
+				require.Error(t, actualErr)
+				require.Contains(t, actualErr.Error(), "quantity")
+			},
+		},
+		{
+			name: "Success_MultipleTicketsInOneRequest",
+			ctx: func(t *testing.T) context.Context {
+				userID := createUserAndGetID(t, userService)
+				return ctxWithUserID(userID)
+			},
+			req: func(t *testing.T) dto.ReserveEventTicketReq {
+				eventID := createEventAndGetID(t)
+				return dto.ReserveEventTicketReq{EventID: eventID, Quantity: 3}
+			},
+			verify: func(t *testing.T, res dto.ReserveEventTicketRes, actualErr error) {
+				require.NoError(t, actualErr)
+				require.NotEqual(t, uuid.Nil, res.ReservationID)
+				require.Len(t, res.TicketIDs, 3)
+				seen := make(map[uuid.UUID]bool)
+				for _, id := range res.TicketIDs {
+					require.NotEqual(t, uuid.Nil, id)
+					require.False(t, seen[id], "duplicate ticket ID %s", id)
+					seen[id] = true
+				}
 			},
 		},
 		{
@@ -105,7 +144,7 @@ func TestReserveEventTicket(t *testing.T) {
 			},
 			req: func(t *testing.T) dto.ReserveEventTicketReq {
 				eventID := createEventAndGetID(t)
-				return dto.ReserveEventTicketReq{EventID: eventID}
+				return dto.ReserveEventTicketReq{EventID: eventID, Quantity: 1}
 			},
 			verify: func(t *testing.T, res dto.ReserveEventTicketRes, actualErr error) {
 				require.Error(t, actualErr)
@@ -123,11 +162,11 @@ func TestReserveEventTicket(t *testing.T) {
 
 				for range 100 {
 					uid := createUserAndGetID(t, userService)
-					_, err := eventService.ReserveEventTicket(ctxWithUserID(uid), dto.ReserveEventTicketReq{EventID: eventID})
+					_, err := eventService.ReserveEventTicket(ctxWithUserID(uid), dto.ReserveEventTicketReq{EventID: eventID, Quantity: 1})
 					require.NoError(t, err)
 				}
 
-				return dto.ReserveEventTicketReq{EventID: eventID}
+				return dto.ReserveEventTicketReq{EventID: eventID, Quantity: 1}
 			},
 			verify: func(t *testing.T, res dto.ReserveEventTicketRes, actualErr error) {
 				require.Error(t, actualErr)
@@ -154,19 +193,15 @@ func TestReserveEventTicket_Concurrent(t *testing.T) {
 	eventService, userService := setupEventAndUserServices(t)
 
 	numTickets := 50
-	err := eventService.CreateEvent(context.Background(), validCreateReqWithTitleAndTickets("concurrent_"+uuid.New().String(), numTickets))
+	eventID, err := eventService.CreateEvent(context.Background(), validCreateReqWithTitleAndTickets("concurrent_"+uuid.New().String(), numTickets))
 	require.NoError(t, err)
-
-	events, err := eventService.GetAllEvents(context.Background())
-	require.NoError(t, err)
-	require.Len(t, events, 1)
-	eventID := events[0].ID
 
 	// 60 goroutines try to reserve; exactly 50 should succeed, 10 should fail
 	const numGoroutines = 60
 	type result struct {
-		ticketID uuid.UUID
-		err      error
+		reservationID uuid.UUID
+		ticketID      uuid.UUID
+		err           error
 	}
 	results := make([]result, numGoroutines)
 	var wg sync.WaitGroup
@@ -177,8 +212,15 @@ func TestReserveEventTicket_Concurrent(t *testing.T) {
 			defer wg.Done()
 			userID := createUserAndGetID(t, userService)
 			ctx := ctxWithUserID(userID)
-			res, err := eventService.ReserveEventTicket(ctx, dto.ReserveEventTicketReq{EventID: eventID})
-			results[idx] = result{ticketID: res.TicketID, err: err}
+			res, err := eventService.ReserveEventTicket(ctx, dto.ReserveEventTicketReq{EventID: eventID, Quantity: 1})
+			var reservationID, ticketID uuid.UUID
+			if err == nil {
+				reservationID = res.ReservationID
+				if len(res.TicketIDs) > 0 {
+					ticketID = res.TicketIDs[0]
+				}
+			}
+			results[idx] = result{reservationID: reservationID, ticketID: ticketID, err: err}
 		}(i)
 	}
 	wg.Wait()
@@ -190,6 +232,7 @@ func TestReserveEventTicket_Concurrent(t *testing.T) {
 	for _, r := range results {
 		if r.err == nil {
 			successes++
+			require.NotEqual(t, uuid.Nil, r.reservationID, "successful reservation must return non-nil reservation ID")
 			require.NotEqual(t, uuid.Nil, r.ticketID, "successful reservation must return non-nil ticket ID")
 			require.False(t, ticketIDs[r.ticketID], "each ticket must be reserved exactly once (no double-booking)")
 			ticketIDs[r.ticketID] = true

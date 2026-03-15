@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/guncv/ticket-reservation-server/internal/infra/log"
 	"github.com/guncv/ticket-reservation-server/internal/service/event"
 	"github.com/guncv/ticket-reservation-server/internal/service/event/dto"
@@ -33,7 +32,7 @@ func (h *EventHandler) CreateEvent(c *gin.Context) {
 		return
 	}
 
-	err := h.eventService.CreateEvent(c.Request.Context(), req)
+	_, err := h.eventService.CreateEvent(c.Request.Context(), req)
 	if err != nil {
 		h.log.Error(c.Request.Context(), err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -72,26 +71,6 @@ func (h *EventHandler) GetAllEvents(c *gin.Context) {
 	c.JSON(http.StatusOK, events)
 }
 
-func (h *EventHandler) GetEventByID(c *gin.Context) {
-	id := c.Param("id")
-
-	idUUID, err := uuid.Parse(id)
-	if err != nil {
-		h.log.Error(c.Request.Context(), err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	event, err := h.eventService.GetEventByID(c.Request.Context(), idUUID)
-	if err != nil {
-		h.log.Error(c.Request.Context(), err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, event)
-}
-
 func (h *EventHandler) ReserveEventTicket(c *gin.Context) {
 	var req dto.ReserveEventTicketReq
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -108,4 +87,15 @@ func (h *EventHandler) ReserveEventTicket(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, res)
+}
+
+func (h *EventHandler) GetAllReservations(c *gin.Context) {
+	reservations, err := h.eventService.GetAllReservations(c.Request.Context())
+	if err != nil {
+		h.log.Error(c.Request.Context(), err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, reservations)
 }

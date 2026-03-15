@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/guncv/ticket-reservation-server/internal/service/event/dto"
+	"github.com/guncv/ticket-reservation-server/internal/service/event/event"
 	"github.com/guncv/ticket-reservation-server/internal/shared"
 )
 
@@ -16,8 +17,8 @@ func (s *eventService) ReserveEventTicket(ctx context.Context, req dto.ReserveEv
 	}
 	defer tx.Rollback(ctx)
 
-	if req.EventID == uuid.Nil {
-		return dto.ReserveEventTicketRes{}, errors.New("event_id is required")
+	if err := event.ValidateReserveEventTicket(req); err != nil {
+		return dto.ReserveEventTicketRes{}, err
 	}
 
 	userIDStr, err := shared.GetUserIDFromContext(ctx)
@@ -30,7 +31,7 @@ func (s *eventService) ReserveEventTicket(ctx context.Context, req dto.ReserveEv
 		return dto.ReserveEventTicketRes{}, errors.New("invalid user_id in context")
 	}
 
-	ticketID, err := s.eventRepo.ReserveTicket(ctx, req.EventID, userID)
+	result, err := s.eventRepo.ReserveTickets(ctx, req.EventID, userID, req.Quantity)
 	if err != nil {
 		return dto.ReserveEventTicketRes{}, err
 	}
@@ -39,5 +40,8 @@ func (s *eventService) ReserveEventTicket(ctx context.Context, req dto.ReserveEv
 		return dto.ReserveEventTicketRes{}, err
 	}
 
-	return dto.ReserveEventTicketRes{TicketID: ticketID}, nil
+	return dto.ReserveEventTicketRes{
+		ReservationID: result.ReservationID,
+		TicketIDs:     result.TicketIDs,
+	}, nil
 }

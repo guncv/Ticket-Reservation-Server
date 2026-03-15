@@ -51,6 +51,7 @@ func (s *userService) createUser(ctx context.Context, req dto.CreateUserReq, rol
 	}
 
 	return dto.CreateUserResp{
+		UserID:       userID,
 		AccessToken:  session.AccessToken,
 		RefreshToken: session.RefreshToken,
 	}, nil

@@ -11,12 +11,12 @@ import (
 )
 
 type EventService interface {
-	CreateEvent(ctx context.Context, req dto.CreateEventReq) error
+	CreateEvent(ctx context.Context, req dto.CreateEventReq) (uuid.UUID, error)
 	UpdateEvent(ctx context.Context, req dto.UpdateEventReq) error
 	GetAllEvents(ctx context.Context) ([]dto.Event, error)
-	GetEventByID(ctx context.Context, id uuid.UUID) (dto.Event, error)
 
 	ReserveEventTicket(ctx context.Context, req dto.ReserveEventTicketReq) (dto.ReserveEventTicketRes, error)
+	GetAllReservations(ctx context.Context) ([]dto.Reservation, error)
 }
 
 type eventService struct {

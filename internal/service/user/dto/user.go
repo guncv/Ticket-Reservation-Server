@@ -13,6 +13,7 @@ type CreateUserReq struct {
 }
 
 type CreateUserResp struct {
+	UserID       string `json:"user_id"`
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"-"` // Only set in HttpOnly cookie, never in JSON body
 }
