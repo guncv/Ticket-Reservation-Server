@@ -13,6 +13,10 @@ type CreateEventReq struct {
 	TotalTickets int             `json:"total_tickets"`
 }
 
+type CreateEventRes struct {
+	ID uuid.UUID `json:"id"`
+}
+
 type UpdateEventReq struct {
 	ID           uuid.UUID       `json:"id"`
 	Title        string          `json:"title"`

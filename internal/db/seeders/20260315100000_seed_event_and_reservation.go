@@ -30,11 +30,11 @@ func seedEventAndReservationUp(ctx context.Context, pool *pgxpool.Pool, cfg *con
 		return err
 	}
 
-	eventID, err := eventService.CreateEvent(ctx, dto.CreateEventReq{
+	eventRes, err := eventService.CreateEvent(ctx, dto.CreateEventReq{
 		Title:        seededEventTitle,
 		Description:  "An amazing live concert experience",
 		Price:        decimal.NewFromFloat(49.99),
-		TotalTickets: 100,
+		TotalTickets: 1_000_000,
 	})
 	if err != nil {
 		return err
@@ -42,7 +42,7 @@ func seedEventAndReservationUp(ctx context.Context, pool *pgxpool.Pool, cfg *con
 
 	ctxWithUser := context.WithValue(ctx, shared.UserIDKey, seededAdminUserID)
 	_, err = eventService.ReserveEventTicket(ctxWithUser, dto.ReserveEventTicketReq{
-		EventID:  eventID,
+		EventID:  eventRes.ID,
 		Quantity: 2,
 	})
 	if err != nil {

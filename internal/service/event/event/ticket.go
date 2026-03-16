@@ -7,7 +7,7 @@ import (
 	"github.com/guncv/ticket-reservation-server/internal/service/event/dto"
 )
 
-const MaxReserveQuantity = 10
+const MaxReserveQuantity = 20
 
 func ValidateReserveEventTicket(req dto.ReserveEventTicketReq) error {
 	if req.EventID == uuid.Nil {

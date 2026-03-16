@@ -32,14 +32,14 @@ func (h *EventHandler) CreateEvent(c *gin.Context) {
 		return
 	}
 
-	_, err := h.eventService.CreateEvent(c.Request.Context(), req)
+	res, err := h.eventService.CreateEvent(c.Request.Context(), req)
 	if err != nil {
 		h.log.Error(c.Request.Context(), err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, nil)
+	c.JSON(http.StatusCreated, gin.H{"id": res.ID})
 }
 
 func (h *EventHandler) UpdateEvent(c *gin.Context) {

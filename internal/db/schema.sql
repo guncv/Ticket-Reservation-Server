@@ -1,4 +1,4 @@
-\restrict MPMqZuXKhdjzUOJ1TXCYaXt2Z5XggVLUuCU8thMOlbzdmvUbwfPgPeWsuBvgZZf
+\restrict tQWfUcuT8XWiMkyefr0eNRYbiPkv4ubdfLrarf4JGZUAcFNd9kdsxeame46aZXU
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1 (Homebrew)
@@ -29,6 +29,7 @@ CREATE TABLE public.events (
     description text NOT NULL,
     price numeric NOT NULL,
     total_tickets integer NOT NULL,
+    available_tickets integer DEFAULT 0 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -241,7 +242,7 @@ ALTER TABLE ONLY public.tickets
 -- PostgreSQL database dump complete
 --
 
-\unrestrict MPMqZuXKhdjzUOJ1TXCYaXt2Z5XggVLUuCU8thMOlbzdmvUbwfPgPeWsuBvgZZf
+\unrestrict tQWfUcuT8XWiMkyefr0eNRYbiPkv4ubdfLrarf4JGZUAcFNd9kdsxeame46aZXU
 
 
 --

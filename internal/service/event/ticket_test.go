@@ -47,9 +47,9 @@ func TestReserveEventTicket(t *testing.T) {
 
 	createEventAndGetID := func(t *testing.T) uuid.UUID {
 		t.Helper()
-		eventID, err := eventService.CreateEvent(context.Background(), validCreateReqWithTitle("reserve_"+uuid.New().String()))
+		eventRes, err := eventService.CreateEvent(context.Background(), validCreateReqWithTitle("reserve_"+uuid.New().String()))
 		require.NoError(t, err)
-		return eventID
+		return eventRes.ID
 	}
 
 	testCases := []struct {
@@ -193,7 +193,7 @@ func TestReserveEventTicket_Concurrent(t *testing.T) {
 	eventService, userService := setupEventAndUserServices(t)
 
 	numTickets := 50
-	eventID, err := eventService.CreateEvent(context.Background(), validCreateReqWithTitleAndTickets("concurrent_"+uuid.New().String(), numTickets))
+	eventRes, err := eventService.CreateEvent(context.Background(), validCreateReqWithTitleAndTickets("concurrent_"+uuid.New().String(), numTickets))
 	require.NoError(t, err)
 
 	// 60 goroutines try to reserve; exactly 50 should succeed, 10 should fail
@@ -212,7 +212,7 @@ func TestReserveEventTicket_Concurrent(t *testing.T) {
 			defer wg.Done()
 			userID := createUserAndGetID(t, userService)
 			ctx := ctxWithUserID(userID)
-			res, err := eventService.ReserveEventTicket(ctx, dto.ReserveEventTicketReq{EventID: eventID, Quantity: 1})
+			res, err := eventService.ReserveEventTicket(ctx, dto.ReserveEventTicketReq{EventID: eventRes.ID, Quantity: 1})
 			var reservationID, ticketID uuid.UUID
 			if err == nil {
 				reservationID = res.ReservationID

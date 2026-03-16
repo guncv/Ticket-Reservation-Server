@@ -3,7 +3,6 @@ package event
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"github.com/guncv/ticket-reservation-server/internal/db"
 	"github.com/guncv/ticket-reservation-server/internal/infra/log"
 	"github.com/guncv/ticket-reservation-server/internal/service/event/dto"
@@ -11,9 +10,10 @@ import (
 )
 
 type EventService interface {
-	CreateEvent(ctx context.Context, req dto.CreateEventReq) (uuid.UUID, error)
+	CreateEvent(ctx context.Context, req dto.CreateEventReq) (dto.CreateEventRes, error)
 	UpdateEvent(ctx context.Context, req dto.UpdateEventReq) error
 	GetAllEvents(ctx context.Context) ([]dto.Event, error)
+	SyncAvailableTickets(ctx context.Context) error
 
 	ReserveEventTicket(ctx context.Context, req dto.ReserveEventTicketReq) (dto.ReserveEventTicketRes, error)
 	GetAllReservations(ctx context.Context) ([]dto.Reservation, error)

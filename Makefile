@@ -35,6 +35,9 @@ run-db:
 clear-db:
 	docker compose down -v --remove-orphans
 
+load-test-data:
+	./scripts/load_test.sh
+
 mock-gen:
 	mockery
 

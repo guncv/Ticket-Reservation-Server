@@ -115,6 +115,8 @@ func setDefaults(v *viper.Viper) {
 
 	v.SetDefault("TokenConfig.TOKEN_TYPE", defaultTokenType)
 	v.SetDefault("TokenConfig.TOKEN_ISSUER", defaultTokenIssuer)
+
+	v.SetDefault("BgJobsConfig.TICKET_COUNTER_INTERVAL", defaultTicketCounterInterval)
 }
 
 func (c *Config) Validate() error {

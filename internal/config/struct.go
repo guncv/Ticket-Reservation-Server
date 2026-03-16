@@ -12,6 +12,7 @@ type Config struct {
 	RedisConfig    RedisConfig    `mapstructure:"RedisConfig"`
 	AuthConfig     AuthConfig     `mapstructure:"AuthConfig"`
 	TokenConfig    TokenConfig    `mapstructure:"TokenConfig"`
+	BgJobsConfig   BgJobsConfig   `mapstructure:"BgJobsConfig"`
 }
 
 type AppConfig struct {
@@ -58,12 +59,8 @@ type TokenConfig struct {
 	TokenIssuer string `mapstructure:"TOKEN_ISSUER"`
 }
 
-type Argon2Params struct {
-	SaltLength  int `mapstructure:"SALT_LENGTH"`
-	Memory      int `mapstructure:"MEMORY"`
-	Iterations  int `mapstructure:"ITERATIONS"`
-	Parallelism int `mapstructure:"PARALLELISM"`
-	KeyLength   int `mapstructure:"KEY_LENGTH"`
+type BgJobsConfig struct {
+	TicketCounterInterval time.Duration `mapstructure:"TICKET_COUNTER_INTERVAL"`
 }
 
 const (
@@ -99,6 +96,9 @@ const (
 	// Token defaults
 	defaultTokenType   = "jwt"
 	defaultTokenIssuer = "ticket-reservation-server"
+
+	// BgJobs defaults
+	defaultTicketCounterInterval = 5 * time.Second
 )
 
 const (

@@ -8,32 +8,32 @@ import (
 	"github.com/guncv/ticket-reservation-server/internal/service/event/event"
 )
 
-func (s *eventService) CreateEvent(ctx context.Context, req dto.CreateEventReq) (uuid.UUID, error) {
+func (s *eventService) CreateEvent(ctx context.Context, req dto.CreateEventReq) (dto.CreateEventRes, error) {
 	ctx, tx, err := s.db.EnsureTxFromCtx(ctx)
 	if err != nil {
-		return uuid.Nil, err
+		return dto.CreateEventRes{}, err
 	}
 	defer tx.Rollback(ctx)
 
 	exists, err := s.eventRepo.CheckEventTitleExists(ctx, req.Title, uuid.Nil)
 	if err != nil {
-		return uuid.Nil, err
+		return dto.CreateEventRes{}, err
 	}
 
 	if err := event.ValidateCreateEvent(req, exists); err != nil {
-		return uuid.Nil, err
+		return dto.CreateEventRes{}, err
 	}
 
 	eventID, err := s.eventRepo.CreateEvent(ctx, req)
 	if err != nil {
-		return uuid.Nil, err
+		return dto.CreateEventRes{}, err
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return uuid.Nil, err
+		return dto.CreateEventRes{}, err
 	}
 
-	return eventID, nil
+	return dto.CreateEventRes{ID: eventID}, nil
 }
 
 func (s *eventService) UpdateEvent(ctx context.Context, req dto.UpdateEventReq) error {
@@ -85,4 +85,8 @@ func (s *eventService) GetAllEvents(ctx context.Context) ([]dto.Event, error) {
 	}
 
 	return events, nil
+}
+
+func (s *eventService) SyncAvailableTickets(ctx context.Context) error {
+	return s.eventRepo.SyncAvailableTickets(ctx)
 }

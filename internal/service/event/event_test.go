@@ -117,9 +117,9 @@ func TestUpdateEvent(t *testing.T) {
 
 	createAndGetID := func(t *testing.T) uuid.UUID {
 		t.Helper()
-		eventID, err := eventService.CreateEvent(context.Background(), validCreateReq())
+		eventRes, err := eventService.CreateEvent(context.Background(), validCreateReq())
 		require.NoError(t, err)
-		return eventID
+		return eventRes.ID
 	}
 
 	testCases := []struct {
