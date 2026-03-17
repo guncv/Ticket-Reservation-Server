@@ -18,19 +18,6 @@ func (r *eventRepository) ReserveTickets(ctx context.Context, eventID, userID uu
 	}
 	defer conn.Release()
 
-	// Lock the event row to prevent concurrent over-reservation
-	var availableTickets int
-	lockQuery := `SELECT available_tickets FROM events WHERE id = $1 FOR UPDATE`
-	err = conn.QueryRow(ctx, lockQuery, eventID).Scan(&availableTickets)
-	if err != nil {
-		r.log.Error(ctx, "Failed to lock event row", err)
-		return dto.ReserveEventTicketRes{}, fmt.Errorf("failed to lock event: %w", err)
-	}
-
-	if availableTickets < quantity {
-		return dto.ReserveEventTicketRes{}, ErrNoAvailableTickets
-	}
-
 	// Atomically decrement available_tickets
 	updateQuery := `
 		UPDATE events
