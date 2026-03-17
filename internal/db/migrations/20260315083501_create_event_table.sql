@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS events (
     description TEXT NOT NULL,
     price NUMERIC NOT NULL,
     total_tickets INT NOT NULL,
-    available_tickets INT NOT NULL DEFAULT 0,
+    available_tickets INT NOT NULL DEFAULT 0 CHECK (available_tickets >= 0 AND available_tickets <= total_tickets),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );

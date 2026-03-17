@@ -1,4 +1,4 @@
-\restrict ToBshmTHZk4fJp8pXIp8bMkXXz9U7jCf7qkeP5JT2DhUykwTeIHn1SMcY8ZfaER
+\restrict pBsj3dPJG9FXW3jyg6MtdQHfhlUYR5L5wl7x30AlAKHOlbDCJRcvXfsHKKeTRl2
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1 (Homebrew)
@@ -31,7 +31,8 @@ CREATE TABLE public.events (
     total_tickets integer NOT NULL,
     available_tickets integer DEFAULT 0 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT events_check CHECK (((available_tickets >= 0) AND (available_tickets <= total_tickets)))
 );
 
 
@@ -198,7 +199,7 @@ ALTER TABLE ONLY public.sessions
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ToBshmTHZk4fJp8pXIp8bMkXXz9U7jCf7qkeP5JT2DhUykwTeIHn1SMcY8ZfaER
+\unrestrict pBsj3dPJG9FXW3jyg6MtdQHfhlUYR5L5wl7x30AlAKHOlbDCJRcvXfsHKKeTRl2
 
 
 --
