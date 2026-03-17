@@ -86,7 +86,3 @@ func (s *eventService) GetAllEvents(ctx context.Context) ([]dto.Event, error) {
 
 	return events, nil
 }
-
-func (s *eventService) SyncAvailableTickets(ctx context.Context) error {
-	return s.eventRepo.SyncAvailableTickets(ctx)
-}

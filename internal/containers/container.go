@@ -1,15 +1,9 @@
 package containers
 
 import (
-	"context"
-	"time"
-
 	"github.com/gin-gonic/gin"
 	"github.com/guncv/ticket-reservation-server/internal/api"
 	"github.com/guncv/ticket-reservation-server/internal/config"
-	"github.com/guncv/ticket-reservation-server/internal/infra/job"
-	"github.com/guncv/ticket-reservation-server/internal/infra/log"
-	"github.com/guncv/ticket-reservation-server/internal/service/event"
 	"go.uber.org/dig"
 )
 
@@ -35,14 +29,6 @@ func (c *Container) Run() *Container {
 	router := gin.Default()
 
 	api.RegisterRoutes(router, c.Container, c.cfg)
-
-	if err := c.Container.Invoke(func(eventService event.EventService, logger log.Logger) {
-		ticketCounterJob := job.NewTicketCounterJob(eventService, logger, 3*time.Second)
-		ticketCounterJob.Start(context.Background())
-	}); err != nil {
-		c.Error = err
-		return c
-	}
 
 	port := c.cfg.AppConfig.AppPort
 	if port == "" {

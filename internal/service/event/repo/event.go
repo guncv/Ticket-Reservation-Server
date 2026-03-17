@@ -15,7 +15,7 @@ func (r *eventRepository) CreateEvent(ctx context.Context, event dto.CreateEvent
 	}
 	defer conn.Release()
 
-	createEventQuery := `
+	query := `
 		INSERT INTO events (title, description, price, total_tickets, available_tickets)
 		VALUES ($1, $2, $3, $4, $4)
 		RETURNING id
@@ -23,7 +23,7 @@ func (r *eventRepository) CreateEvent(ctx context.Context, event dto.CreateEvent
 
 	var eventID uuid.UUID
 	err = conn.QueryRow(ctx,
-		createEventQuery,
+		query,
 		event.Title,
 		event.Description,
 		event.Price,
@@ -32,12 +32,6 @@ func (r *eventRepository) CreateEvent(ctx context.Context, event dto.CreateEvent
 	if err != nil {
 		r.log.Error(ctx, "Failed to create event", err)
 		return uuid.Nil, fmt.Errorf("failed to create event: %w", err)
-	}
-
-	if event.TotalTickets > 0 {
-		if err := r.CreateTicketsForEvent(ctx, eventID, event.TotalTickets); err != nil {
-			return uuid.Nil, err
-		}
 	}
 
 	return eventID, nil
@@ -77,12 +71,6 @@ func (r *eventRepository) UpdateEvent(ctx context.Context, event dto.UpdateEvent
 	if err != nil {
 		r.log.Error(ctx, "Failed to update event", err)
 		return fmt.Errorf("failed to update event: %w", err)
-	}
-
-	if additionalTickets > 0 {
-		if err := r.CreateTicketsForEvent(ctx, event.ID, additionalTickets); err != nil {
-			return fmt.Errorf("failed to create additional tickets: %w", err)
-		}
 	}
 
 	return nil
@@ -198,28 +186,4 @@ func (r *eventRepository) GetAllEvents(ctx context.Context) ([]dto.Event, error)
 		events = append(events, event)
 	}
 	return events, rows.Err()
-}
-
-func (r *eventRepository) SyncAvailableTickets(ctx context.Context) error {
-	ctx, conn, err := r.db.EnsureConnFromCtx(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get connection: %w", err)
-	}
-	defer conn.Release()
-
-	query := `
-		UPDATE events e
-		SET available_tickets = (
-			SELECT COUNT(*) FROM tickets t
-			WHERE t.event_id = e.id AND t.status = $1
-		)
-	`
-
-	_, err = conn.Exec(ctx, query, dto.TicketStatusAvailable)
-	if err != nil {
-		r.log.Error(ctx, "Failed to sync available tickets", err)
-		return fmt.Errorf("failed to sync available tickets: %w", err)
-	}
-
-	return nil
 }

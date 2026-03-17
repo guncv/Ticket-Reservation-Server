@@ -23,8 +23,8 @@ func (r *eventRepository) GetAllReservations(ctx context.Context) ([]dto.Reserva
 			e.description,
 			e.price,
 			e.total_tickets,
-			(SELECT COUNT(*)::int FROM tickets t2 WHERE t2.event_id = e.id AND t2.status = $1) AS available_tickets,
-			(SELECT COUNT(*)::int FROM tickets t WHERE t.reservation_id = r.id) AS quantity,
+			e.available_tickets,
+			r.quantity,
 			r.user_id,
 			u.user_name,
 			r.created_at,
@@ -35,7 +35,7 @@ func (r *eventRepository) GetAllReservations(ctx context.Context) ([]dto.Reserva
 		ORDER BY r.created_at DESC
 	`
 
-	rows, err := conn.Query(ctx, query, dto.TicketStatusAvailable)
+	rows, err := conn.Query(ctx, query)
 	if err != nil {
 		r.log.Error(ctx, "Failed to get all reservations", err)
 		return nil, fmt.Errorf("failed to get all reservations: %w", err)
@@ -67,6 +67,7 @@ func (r *eventRepository) GetAllReservations(ctx context.Context) ([]dto.Reserva
 	}
 	return reservations, rows.Err()
 }
+
 func (r *eventRepository) GetReservationByID(ctx context.Context, id uuid.UUID) (dto.Reservation, error) {
 	ctx, conn, err := r.db.EnsureConnFromCtx(ctx)
 	if err != nil {
@@ -82,8 +83,8 @@ func (r *eventRepository) GetReservationByID(ctx context.Context, id uuid.UUID) 
 			e.description,
 			e.price,
 			e.total_tickets,
-			(SELECT COUNT(*)::int FROM tickets t2 WHERE t2.event_id = e.id AND t2.status = $1) AS available_tickets,
-			(SELECT COUNT(*)::int FROM tickets t WHERE t.reservation_id = r.id) AS quantity,
+			e.available_tickets,
+			r.quantity,
 			r.user_id,
 			u.user_name,
 			r.created_at,
@@ -91,11 +92,11 @@ func (r *eventRepository) GetReservationByID(ctx context.Context, id uuid.UUID) 
 		FROM reservations r
 		JOIN events e ON e.id = r.event_id
 		JOIN users u ON u.id = r.user_id
-		WHERE r.id = $2
+		WHERE r.id = $1
 	`
 
 	var res dto.Reservation
-	err = conn.QueryRow(ctx, query, dto.TicketStatusAvailable, id).Scan(
+	err = conn.QueryRow(ctx, query, id).Scan(
 		&res.ID,
 		&res.EventID,
 		&res.EventTitle,
@@ -131,8 +132,8 @@ func (r *eventRepository) GetReservationByEventID(ctx context.Context, eventID u
 			e.description,
 			e.price,
 			e.total_tickets,
-			(SELECT COUNT(*)::int FROM tickets t2 WHERE t2.event_id = e.id AND t2.status = $1) AS available_tickets,
-			(SELECT COUNT(*)::int FROM tickets t WHERE t.reservation_id = r.id) AS quantity,
+			e.available_tickets,
+			r.quantity,
 			r.user_id,
 			u.user_name,
 			r.created_at,
@@ -140,11 +141,11 @@ func (r *eventRepository) GetReservationByEventID(ctx context.Context, eventID u
 		FROM reservations r
 		JOIN events e ON e.id = r.event_id
 		JOIN users u ON u.id = r.user_id
-		WHERE r.event_id = $2
+		WHERE r.event_id = $1
 		ORDER BY r.created_at DESC
 	`
 
-	rows, err := conn.Query(ctx, query, dto.TicketStatusAvailable, eventID)
+	rows, err := conn.Query(ctx, query, eventID)
 	if err != nil {
 		r.log.Error(ctx, "Failed to get reservations by event id", err)
 		return nil, fmt.Errorf("failed to get reservations by event id: %w", err)
@@ -192,8 +193,8 @@ func (r *eventRepository) GetAllReservationByUserID(ctx context.Context, userID 
 			e.description,
 			e.price,
 			e.total_tickets,
-			(SELECT COUNT(*)::int FROM tickets t2 WHERE t2.event_id = e.id AND t2.status = $1) AS available_tickets,
-			(SELECT COUNT(*)::int FROM tickets t WHERE t.reservation_id = r.id) AS quantity,
+			e.available_tickets,
+			r.quantity,
 			r.user_id,
 			u.user_name,
 			r.created_at,
@@ -201,11 +202,11 @@ func (r *eventRepository) GetAllReservationByUserID(ctx context.Context, userID 
 		FROM reservations r
 		JOIN events e ON e.id = r.event_id
 		JOIN users u ON u.id = r.user_id
-		WHERE r.user_id = $2
+		WHERE r.user_id = $1
 		ORDER BY r.created_at DESC
 	`
 
-	rows, err := conn.Query(ctx, query, dto.TicketStatusAvailable, userID)
+	rows, err := conn.Query(ctx, query, userID)
 	if err != nil {
 		r.log.Error(ctx, "Failed to get reservations by user id", err)
 		return nil, fmt.Errorf("failed to get reservations by user id: %w", err)

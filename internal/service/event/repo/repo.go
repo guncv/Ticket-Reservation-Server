@@ -15,11 +15,12 @@ type EventRepository interface {
 	CheckEventTitleExists(ctx context.Context, title string, excludeID uuid.UUID) (bool, error)
 	GetEventByID(ctx context.Context, id uuid.UUID) (dto.Event, error)
 	GetAllEvents(ctx context.Context) ([]dto.Event, error)
-	SyncAvailableTickets(ctx context.Context) error
 
-	CreateTicketsForEvent(ctx context.Context, eventID uuid.UUID, count int) error
 	ReserveTickets(ctx context.Context, eventID, userID uuid.UUID, quantity int) (dto.ReserveEventTicketRes, error)
 	GetAllReservations(ctx context.Context) ([]dto.Reservation, error)
+	GetReservationByID(ctx context.Context, id uuid.UUID) (dto.Reservation, error)
+	GetReservationByEventID(ctx context.Context, eventID uuid.UUID) ([]dto.Reservation, error)
+	GetAllReservationByUserID(ctx context.Context, userID uuid.UUID) ([]dto.Reservation, error)
 }
 
 type eventRepository struct {

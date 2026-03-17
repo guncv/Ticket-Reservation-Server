@@ -1,4 +1,4 @@
-\restrict tQWfUcuT8XWiMkyefr0eNRYbiPkv4ubdfLrarf4JGZUAcFNd9kdsxeame46aZXU
+\restrict ToBshmTHZk4fJp8pXIp8bMkXXz9U7jCf7qkeP5JT2DhUykwTeIHn1SMcY8ZfaER
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1 (Homebrew)
@@ -43,6 +43,7 @@ CREATE TABLE public.reservations (
     id uuid DEFAULT uuidv7() NOT NULL,
     event_id uuid NOT NULL,
     user_id uuid NOT NULL,
+    quantity integer DEFAULT 1 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -81,20 +82,6 @@ CREATE TABLE public.sessions (
     revoked_at timestamp with time zone,
     expires_at timestamp with time zone NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
---
--- Name: tickets; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.tickets (
-    id uuid DEFAULT uuidv7() NOT NULL,
-    event_id uuid NOT NULL,
-    reservation_id uuid,
-    status character varying(20) NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -161,14 +148,6 @@ ALTER TABLE ONLY public.sessions
 
 
 --
--- Name: tickets tickets_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.tickets
-    ADD CONSTRAINT tickets_pkey PRIMARY KEY (id);
-
-
---
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -182,13 +161,6 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_user_name_key UNIQUE (user_name);
-
-
---
--- Name: idx_tickets_available; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_tickets_available ON public.tickets USING btree (event_id, status);
 
 
 --
@@ -223,26 +195,10 @@ ALTER TABLE ONLY public.sessions
 
 
 --
--- Name: tickets tickets_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.tickets
-    ADD CONSTRAINT tickets_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id) ON DELETE RESTRICT;
-
-
---
--- Name: tickets tickets_reservation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.tickets
-    ADD CONSTRAINT tickets_reservation_id_fkey FOREIGN KEY (reservation_id) REFERENCES public.reservations(id) ON DELETE RESTRICT;
-
-
---
 -- PostgreSQL database dump complete
 --
 
-\unrestrict tQWfUcuT8XWiMkyefr0eNRYbiPkv4ubdfLrarf4JGZUAcFNd9kdsxeame46aZXU
+\unrestrict ToBshmTHZk4fJp8pXIp8bMkXXz9U7jCf7qkeP5JT2DhUykwTeIHn1SMcY8ZfaER
 
 
 --

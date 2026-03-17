@@ -40,8 +40,5 @@ func (s *eventService) ReserveEventTicket(ctx context.Context, req dto.ReserveEv
 		return dto.ReserveEventTicketRes{}, err
 	}
 
-	return dto.ReserveEventTicketRes{
-		ReservationID: result.ReservationID,
-		TicketIDs:     result.TicketIDs,
-	}, nil
+	return result, nil
 }

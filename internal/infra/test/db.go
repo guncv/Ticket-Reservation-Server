@@ -151,7 +151,7 @@ func TruncateAllTables() error {
 			AND state = 'idle in transaction';
 	`)
 
-	sql := `TRUNCATE TABLE users, sessions, events, reservations, tickets RESTART IDENTITY CASCADE;`
+	sql := `TRUNCATE TABLE users, sessions, events, reservations RESTART IDENTITY CASCADE;`
 
 	_, err := globalPool.Pool.Exec(globalCtx, sql)
 	return err
