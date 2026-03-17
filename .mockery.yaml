@@ -1,0 +1,15 @@
+# Mockery configuration for test mocks
+# Run: make mock-gen
+
+with-expecter: false
+issue-845-fix: true
+
+packages:
+  github.com/guncv/ticket-reservation-server/internal/service/user:
+    config:
+      dir: mocks
+      outpkg: mocks
+      filename: "{{.InterfaceName}}.go"
+      mockname: "Mock{{.InterfaceName}}"
+    interfaces:
+      UserService: {}
