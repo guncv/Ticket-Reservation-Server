@@ -2,6 +2,8 @@ package containers
 
 import (
 	"context"
+	"net/http"
+	_ "net/http/pprof"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -32,6 +34,11 @@ func (c *Container) configure() {
 }
 
 func (c *Container) Run() *Container {
+	// Start pprof server for profiling (CPU, memory, goroutines)
+	go func() {
+		http.ListenAndServe(":6060", nil)
+	}()
+
 	router := gin.Default()
 
 	api.RegisterRoutes(router, c.Container, c.cfg)

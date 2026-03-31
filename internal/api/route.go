@@ -14,7 +14,7 @@ func RegisterRoutes(e *gin.Engine, c *dig.Container, cfg *config.Config) {
 
 	corsOrigins := cfg.AppConfig.CORSOrigins
 	if len(corsOrigins) == 0 {
-		corsOrigins = []string{"http://localhost:3l000"}
+		corsOrigins = []string{"http://localhost:3000"}
 	}
 
 	e.Use(cors.New(cors.Config{
