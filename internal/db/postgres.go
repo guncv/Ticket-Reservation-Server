@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"runtime"
 	"time"
 
 	"github.com/guncv/ticket-reservation-server/internal/config"
@@ -81,10 +80,10 @@ func connStr(cfg config.DatabaseConfig) (string, error) {
 		cfg.ConnectTimeout = time.Second * 5
 	}
 	if cfg.MaxOpenConns == 0 {
-		cfg.MaxOpenConns = runtime.NumCPU() * 5
+		cfg.MaxOpenConns = 50000
 	}
 	if cfg.MaxIdleConns == 0 {
-		cfg.MaxIdleConns = runtime.NumCPU()
+		cfg.MaxIdleConns = 5000
 	}
 	if cfg.ConnMaxLifetime == 0 {
 		cfg.ConnMaxLifetime = time.Hour

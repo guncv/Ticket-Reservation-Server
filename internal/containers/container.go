@@ -6,6 +6,7 @@ import (
 	_ "net/http/pprof"
 	"time"
 
+	"github.com/felixge/fgprof"
 	"github.com/gin-gonic/gin"
 	"github.com/guncv/ticket-reservation-server/internal/api"
 	"github.com/guncv/ticket-reservation-server/internal/config"
@@ -34,6 +35,9 @@ func (c *Container) configure() {
 }
 
 func (c *Container) Run() *Container {
+	// Register fgprof for wall-clock profiling (includes I/O wait time)
+	http.DefaultServeMux.Handle("/debug/fgprof", fgprof.Handler())
+
 	// Start pprof server for profiling (CPU, memory, goroutines)
 	go func() {
 		http.ListenAndServe(":6060", nil)

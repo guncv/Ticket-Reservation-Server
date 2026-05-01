@@ -79,8 +79,8 @@ const (
 	DefaultPostgresApplicationName       = "ticket-reservation-server"
 	defaultPostgresSSLMode               = "disable"
 	defaultPostgresConnectTimeout        = 10 * time.Second
-	defaultPostgresMaxOpenConns          = 25
-	defaultPostgresMaxIdleConns          = 5
+	defaultPostgresMaxOpenConns          = 50000
+	defaultPostgresMaxIdleConns          = 5000
 	defaultPostgresConnMaxLifetime       = 5 * time.Minute
 	defaultPostgresConnMaxLifetimeJitter = 30 * time.Second
 	defaultPostgresConnMaxIdleTime       = 5 * time.Minute

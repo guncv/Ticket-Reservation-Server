@@ -15,7 +15,7 @@ services:
       - "-c"
       - "logging_collector=on"
       - "-c"
-      - "max_connections=20000"
+      - "max_connections=5000"
     networks:
       - db_network
     healthcheck:

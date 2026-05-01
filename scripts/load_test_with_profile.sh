@@ -21,10 +21,10 @@ set -e
 BASE_URL="${BASE_URL:-http://localhost:8080}"
 PPROF_URL="${PPROF_URL:-http://localhost:6060}"
 TIMEOUT="${TIMEOUT:-30s}"
-CONCURRENCY="${CONCURRENCY:-1000}"
-REQUESTS="${REQUESTS:-100000}"
-QUANTITY="${QUANTITY:-10}"
-TOTAL_TICKETS="${TOTAL_TICKETS:-1000000}"
+CONCURRENCY="${CONCURRENCY:-300}"
+REQUESTS="${REQUESTS:-10000}"
+QUANTITY="${QUANTITY:-5}"
+TOTAL_TICKETS="${TOTAL_TICKETS:-100000}"
 PROFILE_DIR="${PROFILE_DIR:-./profiles}"
 OPEN_BROWSER="${OPEN_BROWSER:-true}"
 
@@ -120,18 +120,22 @@ echo "Baseline captured"
 echo ""
 
 # Calculate profile duration (estimate based on requests and concurrency)
-ESTIMATED_DURATION=$(( (REQUESTS / CONCURRENCY) + 30 ))
-if [ "$ESTIMATED_DURATION" -lt 30 ]; then
-    ESTIMATED_DURATION=30
-fi
-if [ "$ESTIMATED_DURATION" -gt 300 ]; then
-    ESTIMATED_DURATION=300
-fi
+ESTIMATED_DURATION=10
+# if [ "$ESTIMATED_DURATION" -lt 30 ]; then
+#     ESTIMATED_DURATION=30
+# fi
+# if [ "$ESTIMATED_DURATION" -gt 300 ]; then
+#     ESTIMATED_DURATION=300
+# fi
 
-# Step 4: Start CPU profiling in background
+# Step 4: Start CPU profiling and fgprof in background
 echo "Step 4: Starting CPU profiling (${ESTIMATED_DURATION}s)..."
 curl -s "$PPROF_URL/debug/pprof/profile?seconds=$ESTIMATED_DURATION" > "$PROFILE_SUBDIR/cpu.prof" &
 CPU_PROFILE_PID=$!
+
+echo "Starting fgprof (wall-clock profiling) (${ESTIMATED_DURATION}s)..."
+curl -s "$PPROF_URL/debug/fgprof?seconds=$ESTIMATED_DURATION" > "$PROFILE_SUBDIR/fgprof.prof" &
+FGPROF_PID=$!
 sleep 2  # Give profiling time to start
 
 # Step 5: Run load test
@@ -164,10 +168,11 @@ curl -s "$PPROF_URL/debug/pprof/mutex" > "$PROFILE_SUBDIR/mutex.prof"
 echo "Post-load profiles captured"
 echo ""
 
-# Wait for CPU profiling to complete
-echo "Waiting for CPU profiling to complete..."
+# Wait for CPU profiling and fgprof to complete
+echo "Waiting for profiling to complete..."
 wait $CPU_PROFILE_PID 2>/dev/null || true
-echo "CPU profiling complete"
+wait $FGPROF_PID 2>/dev/null || true
+echo "CPU profiling and fgprof complete"
 echo ""
 
 # Step 7: Generate summary
@@ -184,23 +189,25 @@ cat > "$PROFILE_SUBDIR/analyze.sh" << 'ANALYZE_EOF'
 PROFILE_DIR="$(dirname "$0")"
 
 echo "Select profile to analyze:"
-echo "1) CPU profile"
-echo "2) Memory (heap) - after load"
-echo "3) Goroutines - after load"
-echo "4) Allocations"
-echo "5) Block profile"
-echo "6) Mutex profile"
-echo "7) Compare heap before/after"
-read -p "Choice [1-7]: " choice
+echo "1) CPU profile (on-CPU time only)"
+echo "2) fgprof (wall-clock time, includes I/O wait)"
+echo "3) Memory (heap) - after load"
+echo "4) Goroutines - after load"
+echo "5) Allocations"
+echo "6) Block profile"
+echo "7) Mutex profile"
+echo "8) Compare heap before/after"
+read -p "Choice [1-8]: " choice
 
 case $choice in
     1) go tool pprof -http=:8081 "$PROFILE_DIR/cpu.prof" ;;
-    2) go tool pprof -http=:8081 "$PROFILE_DIR/heap_after.prof" ;;
-    3) go tool pprof -http=:8081 "$PROFILE_DIR/goroutine_after.prof" ;;
-    4) go tool pprof -http=:8081 "$PROFILE_DIR/allocs.prof" ;;
-    5) go tool pprof -http=:8081 "$PROFILE_DIR/block.prof" ;;
-    6) go tool pprof -http=:8081 "$PROFILE_DIR/mutex.prof" ;;
-    7) go tool pprof -http=:8081 -diff_base="$PROFILE_DIR/heap_before.prof" "$PROFILE_DIR/heap_after.prof" ;;
+    2) go tool pprof -http=:8081 "$PROFILE_DIR/fgprof.prof" ;;
+    3) go tool pprof -http=:8081 "$PROFILE_DIR/heap_after.prof" ;;
+    4) go tool pprof -http=:8081 "$PROFILE_DIR/goroutine_after.prof" ;;
+    5) go tool pprof -http=:8081 "$PROFILE_DIR/allocs.prof" ;;
+    6) go tool pprof -http=:8081 "$PROFILE_DIR/block.prof" ;;
+    7) go tool pprof -http=:8081 "$PROFILE_DIR/mutex.prof" ;;
+    8) go tool pprof -http=:8081 -diff_base="$PROFILE_DIR/heap_before.prof" "$PROFILE_DIR/heap_after.prof" ;;
     *) echo "Invalid choice" ;;
 esac
 ANALYZE_EOF
@@ -208,8 +215,11 @@ chmod +x "$PROFILE_SUBDIR/analyze.sh"
 
 echo "=== Quick Analysis Commands ==="
 echo ""
-echo "# CPU profile (what functions are slow)"
+echo "# CPU profile (on-CPU time only - what functions use CPU)"
 echo "go tool pprof -http=:8081 $PROFILE_SUBDIR/cpu.prof"
+echo ""
+echo "# fgprof (wall-clock time - includes I/O wait, network, sleep)"
+echo "go tool pprof -http=:8081 $PROFILE_SUBDIR/fgprof.prof"
 echo ""
 echo "# Memory profile (where memory is allocated)"
 echo "go tool pprof -http=:8081 $PROFILE_SUBDIR/heap_after.prof"
@@ -226,11 +236,5 @@ echo ""
 
 # Cleanup
 rm -f /tmp/cookies.txt
-
-# Open browser if requested
-if [ "$OPEN_BROWSER" = "true" ]; then
-    echo "Opening CPU profile in browser..."
-    go tool pprof -http=:8081 "$PROFILE_SUBDIR/cpu.prof" &
-fi
 
 echo "=== Load Test with Profiling Complete ==="
