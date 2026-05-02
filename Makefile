@@ -1,4 +1,4 @@
-.PHONY: run mock-gen clean-mock test migrate-up migrate-down migrate-new seed-new load-test-data load-test-profile-cpu-memory load-test-profile-wallclock load-test-profile monitor-pool
+.PHONY: run mock-gen clean-mock test migrate-up migrate-down migrate-new seed-new load-test-data load-test-profile-cpu-memory load-test-profile-wallclock load-test-profile monitor-pool explain-analyze
 
 migrate-up:
 	cd cmd && go run . migrate up
@@ -61,3 +61,6 @@ test:
 
 monitor-pool:
 	./scripts/monitor_pool.sh
+
+explain-analyze:
+	./scripts/explain_analyze.sh
