@@ -12,6 +12,20 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// PoolStats contains connection pool statistics for monitoring
+type PoolStats struct {
+	TotalConns        int32         `json:"total_conns"`         // Total number of connections in the pool
+	AcquiredConns     int32         `json:"acquired_conns"`      // Connections currently in use
+	IdleConns         int32         `json:"idle_conns"`          // Connections currently idle
+	MaxConns          int32         `json:"max_conns"`           // Maximum pool size
+	AcquireCount      int64         `json:"acquire_count"`       // Total successful acquires
+	AcquireDuration   time.Duration `json:"acquire_duration_ns"` // Total time spent acquiring
+	EmptyAcquireCount int64         `json:"empty_acquire_count"` // Acquires that had to wait (pool was empty)
+	CanceledAcquires  int64         `json:"canceled_acquires"`   // Acquires canceled by context
+	ConstructingConns int32         `json:"constructing_conns"`  // Connections being created
+	PoolUtilization   float64       `json:"pool_utilization"`    // Percentage of pool in use (0-1)
+}
+
 type Tx interface {
 	Begin(ctx context.Context) (pgx.Tx, error)
 	Commit(ctx context.Context) error
@@ -193,4 +207,27 @@ func (c *PgPool) EnsureConnFromCtx(ctx context.Context) (context.Context, Conn, 
 	}
 
 	return ctx, conn, nil
+}
+
+// Stats returns current connection pool statistics
+func (c *PgPool) Stats() PoolStats {
+	s := c.Pool.Stat()
+
+	var utilization float64
+	if s.MaxConns() > 0 {
+		utilization = float64(s.AcquiredConns()) / float64(s.MaxConns())
+	}
+
+	return PoolStats{
+		TotalConns:        s.TotalConns(),
+		AcquiredConns:     s.AcquiredConns(),
+		IdleConns:         s.IdleConns(),
+		MaxConns:          s.MaxConns(),
+		AcquireCount:      s.AcquireCount(),
+		AcquireDuration:   s.AcquireDuration(),
+		EmptyAcquireCount: s.EmptyAcquireCount(),
+		CanceledAcquires:  s.CanceledAcquireCount(),
+		ConstructingConns: s.ConstructingConns(),
+		PoolUtilization:   utilization,
+	}
 }

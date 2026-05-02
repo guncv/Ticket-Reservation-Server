@@ -31,14 +31,21 @@ func RegisterRoutes(e *gin.Engine, c *dig.Container, cfg *config.Config) {
 	if err := c.Invoke(func(
 		userHandler *handlers.UserHandler,
 		eventHandler *handlers.EventHandler,
+		debugHandler *handlers.DebugHandler,
 		authMiddleware AuthMiddleware,
 	) {
 		api_v1 := e.Group("/api/v1")
 		userRoutes(api_v1, userHandler, authMiddleware)
 		eventRoutes(api_v1, eventHandler, authMiddleware)
+		debugRoutes(api_v1, debugHandler)
 	}); err != nil {
 		panic(err)
 	}
+}
+
+func debugRoutes(api_v1 *gin.RouterGroup, debugHandler *handlers.DebugHandler) {
+	debugRoutes := api_v1.Group("/debug")
+	debugRoutes.GET("/pool-stats", debugHandler.PoolStats)
 }
 
 func userRoutes(api_v1 *gin.RouterGroup, userHandler *handlers.UserHandler, authMiddleware AuthMiddleware) {

@@ -10,4 +10,8 @@ func (c *Container) HandlerProvider() {
 	if err := c.Container.Provide(handlers.NewEventHandler); err != nil {
 		c.Error = err
 	}
+
+	if err := c.Container.Provide(handlers.NewDebugHandler); err != nil {
+		c.Error = err
+	}
 }
