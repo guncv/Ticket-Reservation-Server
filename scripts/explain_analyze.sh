@@ -114,7 +114,7 @@ SELECT id FROM events ORDER BY created_at DESC LIMIT 1;
 # Predefined queries — inner SELECT used by ReserveTickets (see repo/ticket.go)
 query_reserve_tickets_select() {
     local event_id="$1"
-    local limit_n="${2:-10}"
+    local limit_n="${2:-100000}"
     cat <<EOF
 SELECT id FROM tickets
 WHERE event_id = '$event_id' AND status = 'available'
